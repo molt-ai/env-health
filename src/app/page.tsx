@@ -41,7 +41,7 @@ export default function Home() {
         return;
       }
 
-      // Use Geoapify if key available, otherwise Nominatim
+      // Use Geoapify if key available, otherwise proxy through our API
       if (apiKey && apiKey !== "YOUR_GEOAPIFY_KEY") {
         try {
           const res = await fetch(
@@ -61,50 +61,17 @@ export default function Home() {
           console.error("Geoapify error:", e);
         }
       } else {
-        // Fallback to Nominatim (free, no key)
+        // Use our server-side proxy to avoid CORS issues with Nominatim
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-              text
-            )}&format=json&addressdetails=1&countrycodes=us&limit=5`,
-            {
-              headers: {
-                "User-Agent": "EnviroHealth/1.0",
-              },
-            }
+            `/api/geocode?q=${encodeURIComponent(text)}`
           );
           const data = await res.json();
-          setSuggestions(
-            data.map(
-              (r: {
-                display_name: string;
-                address: {
-                  postcode?: string;
-                  county?: string;
-                  state?: string;
-                  city?: string;
-                  town?: string;
-                  village?: string;
-                };
-                lat: string;
-                lon: string;
-              }) => ({
-                properties: {
-                  formatted: r.display_name,
-                  postcode: r.address?.postcode,
-                  lat: parseFloat(r.lat),
-                  lon: parseFloat(r.lon),
-                  county: r.address?.county,
-                  state: r.address?.state,
-                  state_code: getStateCode(r.address?.state || ""),
-                  city:
-                    r.address?.city || r.address?.town || r.address?.village,
-                },
-              })
-            )
-          );
+          if (data.suggestions) {
+            setSuggestions(data.suggestions);
+          }
         } catch (e) {
-          console.error("Nominatim error:", e);
+          console.error("Geocode error:", e);
         }
       }
     },
@@ -154,10 +121,16 @@ export default function Home() {
     };
 
     if (!location.zip) {
-      setError(
-        "Could not determine ZIP code for this address. Please try a more specific address."
-      );
-      return;
+      // Try to extract ZIP from the formatted address (often included)
+      const zipMatch = suggestion.properties.formatted.match(/\b(\d{5})\b/);
+      if (zipMatch) {
+        location.zip = zipMatch[1];
+      } else {
+        setError(
+          "Could not determine ZIP code for this address. Try entering a more specific address with ZIP."
+        );
+        return;
+      }
     }
 
     setSelectedLocation(location);

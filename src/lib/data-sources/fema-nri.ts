@@ -7,12 +7,12 @@ export async function fetchNaturalHazards(
   stateCode: string
 ): Promise<NaturalHazardsData | null> {
   try {
-    // Try the FEMA NRI API (county-level)
+    // Try the FEMA NRI API (county-level) via ArcGIS Online
     // Format county for query: "Richmond City" or "Henrico"
     const cleanCounty = county.replace(/ County$/i, "").trim();
 
-    // The NRI data is available via their API
-    const url = `https://hazards.fema.gov/nri/services/arcgis/rest/services/public/nri_counties/MapServer/0/query?where=STATE%3D%27${stateCode}%27+AND+COUNTY+LIKE+%27%25${encodeURIComponent(cleanCounty)}%25%27&outFields=*&f=json`;
+    // The NRI data is available via ArcGIS Online feature service
+    const url = `https://services.arcgis.com/XG15cJAlne2vxtgt/arcgis/rest/services/National_Risk_Index_Counties/FeatureServer/0/query?where=STATEABBRV%3D%27${stateCode}%27+AND+COUNTY+LIKE+%27%25${encodeURIComponent(cleanCounty)}%25%27&outFields=COUNTY,STATEABBRV,RISK_SCORE,RISK_RATNG,ERQK_RISKS,ERQK_RISKR,RFLD_RISKS,RFLD_RISKR,HRCN_RISKS,HRCN_RISKR,TRND_RISKS,TRND_RISKR,WFIR_RISKS,WFIR_RISKR,WNTW_RISKS,WNTW_RISKR,HAIL_RISKS,HAIL_RISKR,HWAV_RISKS,HWAV_RISKR,SWND_RISKS,SWND_RISKR,LTNG_RISKS,LTNG_RISKR,DRGT_RISKS,DRGT_RISKR,CFLD_RISKS,CFLD_RISKR,IFLD_RISKS,IFLD_RISKR&returnGeometry=false&f=json`;
 
     const response = await fetch(url, {
       signal: AbortSignal.timeout(15000),
@@ -40,10 +40,16 @@ export async function fetchNaturalHazards(
         icon: "🌍",
       },
       {
-        name: "Flooding",
+        name: "Riverine Flooding",
         riskScore: attrs.RFLD_RISKS || null,
         riskRating: ratingFromScore(attrs.RFLD_RISKR),
         icon: "🌊",
+      },
+      {
+        name: "Inland Flooding",
+        riskScore: attrs.IFLD_RISKS || null,
+        riskRating: ratingFromScore(attrs.IFLD_RISKR),
+        icon: "🌧️",
       },
       {
         name: "Hurricane",
