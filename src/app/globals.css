@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #1e1e1e;
+  --bg-card-hover: #252525;
+  --border: #2a2a2a;
+  --border-light: #333333;
+  --text-primary: #e8e0d4;
+  --text-secondary: #a89f91;
+  --text-muted: #6b6358;
+  --accent-gold: #c4a35a;
+  --accent-gold-dim: #8b7640;
+  --accent-green: #4a9e6e;
+  --accent-yellow: #d4a843;
+  --accent-orange: #d48a43;
+  --accent-red: #c45a5a;
+  --accent-blue: #5a8ec4;
+  --accent-purple: #8a6ec4;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+/* Autocomplete dropdown styling */
+.geoapify-autocomplete-input {
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-family: 'Georgia', serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.geoapify-autocomplete-input:focus {
+  border-color: var(--accent-gold);
+}
+
+.geoapify-autocomplete-input::placeholder {
+  color: var(--text-muted);
+}
+
+.geoapify-autocomplete-items {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.geoapify-autocomplete-items div {
+  padding: 12px 20px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: 'Georgia', serif;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.geoapify-autocomplete-items div:hover {
+  background: var(--bg-card-hover);
+}
+
+.geoapify-autocomplete-items div:last-child {
+  border-bottom: none;
+}
+
+.geoapify-close-button {
+  color: var(--text-muted);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Score badge animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+/* Loading skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
