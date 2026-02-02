@@ -48,7 +48,6 @@ export default function Home() {
         return;
       }
 
-      // Track first search per session
       if (!searchTracked.current && text.length >= 3) {
         trackAddressSearched(text);
         searchTracked.current = true;
@@ -99,7 +98,6 @@ export default function Home() {
     };
   }, [query, fetchSuggestions]);
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (
@@ -220,30 +218,33 @@ export default function Home() {
       <WebApplicationJsonLd />
 
       {/* Header */}
-      <header className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-[var(--border)]" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <button
             onClick={handleReset}
-            className="flex items-center gap-3 hover:opacity-80 transition"
+            className="flex items-center gap-2.5 hover:opacity-80 transition"
           >
-            <span className="text-2xl">🌿</span>
-            <h1 className="text-xl font-bold text-[var(--accent-gold)]">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a10 10 0 1 0 10 10" />
+              <path d="M12 2v10l6.5-3" />
+            </svg>
+            <h1 className="text-base font-semibold text-[var(--text-primary)] tracking-tight">
               EnviroHealth
             </h1>
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <a
               href="/compare"
-              className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition"
+              className="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition"
             >
-              ⚖️ Compare
+              Compare
             </a>
             {selectedLocation && (
               <button
                 onClick={handleReset}
                 className="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition"
               >
-                ← New Search
+                New Search
               </button>
             )}
           </div>
@@ -253,17 +254,15 @@ export default function Home() {
       {/* Hero / Search / Landing */}
       {!report && !loading && !error && (
         <>
-          <section className="max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-12 sm:pb-16 text-center">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-[var(--text-primary)] leading-tight">
-              What&apos;s in Your Environment?
+          <section className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 sm:pt-36 pb-16 sm:pb-24 text-center">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-5 text-[var(--text-primary)] leading-[1.1] tracking-tight">
+              Know what you&apos;re breathing.
             </h2>
-            <p className="text-base sm:text-lg text-[var(--text-secondary)] mb-10 sm:mb-12 max-w-xl mx-auto">
-              Get a free, instant environmental health report for any US
-              address. Air quality, water safety, toxic sites, disease rates,
-              and natural hazards — all in one place.
+            <p className="text-lg text-[var(--text-secondary)] mb-12 max-w-md mx-auto">
+              Instant environmental health reports for any US address.
             </p>
 
-            <div className="relative max-w-2xl mx-auto">
+            <div className="relative max-w-xl mx-auto">
               <div className="relative">
                 <input
                   ref={inputRef}
@@ -276,7 +275,7 @@ export default function Home() {
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   placeholder="Enter an address, city, or ZIP code..."
-                  className="w-full px-5 sm:px-6 py-4 sm:py-5 bg-[var(--bg-card)] border-2 border-[var(--border)] rounded-2xl text-[var(--text-primary)] text-base sm:text-lg placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-gold)] transition shadow-lg"
+                  className="w-full px-5 sm:px-6 py-4 sm:py-5 bg-[var(--bg-card-solid)] border border-[var(--border)] rounded-2xl text-[var(--text-primary)] text-base sm:text-lg placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-dim)] transition-colors"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                   <svg
@@ -299,15 +298,20 @@ export default function Home() {
               {showSuggestions && suggestions.length > 0 && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden shadow-2xl z-50"
+                  className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-card-solid)] border border-[var(--border)] rounded-xl overflow-hidden shadow-2xl z-50"
                 >
                   {suggestions.map((s, i) => (
                     <button
                       key={i}
                       onClick={() => handleSelect(s)}
-                      className="w-full text-left px-6 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] border-b border-[var(--border)] last:border-b-0 transition"
+                      className="w-full text-left px-5 py-3.5 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] border-b border-[var(--border)] last:border-b-0 transition min-h-[44px]"
                     >
-                      <span className="text-[var(--text-muted)] mr-2">📍</span>
+                      <span className="text-[var(--text-muted)] mr-2">
+                        <svg className="inline w-3.5 h-3.5 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                      </span>
                       {s.properties.formatted}
                       {s.properties.postcode && (
                         <span className="text-[var(--text-muted)] ml-2">
@@ -320,216 +324,34 @@ export default function Home() {
               )}
             </div>
 
-            <p className="mt-4 text-xs text-[var(--text-muted)]">
-              Try: &quot;Richmond, VA&quot; or &quot;90210&quot; or &quot;123
-              Main St, Austin, TX&quot;
+            <p className="mt-5 text-xs text-[var(--text-muted)]">
+              Try &quot;Richmond, VA&quot; or &quot;90210&quot; or &quot;123 Main St, Austin, TX&quot;
             </p>
           </section>
 
-          {/* How it works */}
-          <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
-            <h3 className="text-center text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-8">
-              How It Works
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-              {[
-                {
-                  step: "1",
-                  icon: "📍",
-                  title: "Enter an Address",
-                  desc: "Type any US address, city name, or ZIP code into the search bar.",
-                },
-                {
-                  step: "2",
-                  icon: "🔍",
-                  title: "We Query Federal Databases",
-                  desc: "We pull real-time data from 5+ federal sources including EPA, CDC, AirNow, and FEMA.",
-                },
-                {
-                  step: "3",
-                  icon: "📊",
-                  title: "Get Your Free Report",
-                  desc: "Receive a comprehensive environmental health grade with actionable recommendations.",
-                },
-              ].map((item) => (
-                <div
-                  key={item.step}
-                  className="text-center bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 sm:p-8"
-                >
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent-gold)]15 text-[var(--accent-gold)] text-lg font-bold mb-4 border border-[var(--accent-gold)]33">
-                    {item.step}
-                  </div>
-                  <div className="text-3xl mb-3">{item.icon}</div>
-                  <h4 className="font-bold text-[var(--text-primary)] mb-2">
-                    {item.title}
-                  </h4>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    {item.desc}
-                  </p>
-                </div>
-              ))}
+          {/* Trust Signals — subtle, compact */}
+          <section className="max-w-2xl mx-auto px-4 sm:px-6 pb-24">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-[var(--text-muted)]">
+              <span className="flex items-center gap-1.5">
+                <span className="status-dot" style={{ background: 'var(--accent-dim)', width: 6, height: 6 }} />
+                EPA
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="status-dot" style={{ background: 'var(--accent-dim)', width: 6, height: 6 }} />
+                CDC PLACES
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="status-dot" style={{ background: 'var(--accent-dim)', width: 6, height: 6 }} />
+                AirNow
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="status-dot" style={{ background: 'var(--accent-dim)', width: 6, height: 6 }} />
+                FEMA NRI
+              </span>
             </div>
-          </section>
-
-          {/* What&apos;s in a report */}
-          <section className="bg-[var(--bg-secondary)] border-y border-[var(--border)] py-16">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6">
-              <h3 className="text-center text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
-                What You Get
-              </h3>
-              <p className="text-center text-2xl font-bold text-[var(--text-primary)] mb-10">
-                Five Key Environmental Health Dimensions
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 sm:gap-6">
-                {[
-                  {
-                    icon: "💨",
-                    label: "Air Quality",
-                    desc: "Real-time AQI & pollutants",
-                  },
-                  {
-                    icon: "💧",
-                    label: "Water Safety",
-                    desc: "Drinking water violations",
-                  },
-                  {
-                    icon: "☢️",
-                    label: "Toxic Sites",
-                    desc: "TRI facilities nearby",
-                  },
-                  {
-                    icon: "🏥",
-                    label: "Health Data",
-                    desc: "Disease rates & outcomes",
-                  },
-                  {
-                    icon: "🌪️",
-                    label: "Hazards",
-                    desc: "Flood, fire, storm risk",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex flex-col items-center gap-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 sm:p-5"
-                  >
-                    <span className="text-3xl sm:text-4xl">{item.icon}</span>
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">
-                      {item.label}
-                    </span>
-                    <span className="text-xs text-[var(--text-muted)] text-center">
-                      {item.desc}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Trust Signals */}
-          <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
-            <h3 className="text-center text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-8">
-              Powered by Official Federal Data
-            </h3>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-              {[
-                { name: "EPA", full: "Environmental Protection Agency", icon: "🏛️" },
-                { name: "CDC", full: "Centers for Disease Control", icon: "🏥" },
-                { name: "AirNow", full: "Air Quality Index", icon: "💨" },
-                { name: "FEMA", full: "Federal Emergency Mgmt Agency", icon: "🌊" },
-              ].map((source) => (
-                <div
-                  key={source.name}
-                  className="flex items-center gap-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-5 py-3"
-                >
-                  <span className="text-xl">{source.icon}</span>
-                  <div>
-                    <p className="text-sm font-bold text-[var(--text-primary)]">
-                      {source.name}
-                    </p>
-                    <p className="text-xs text-[var(--text-muted)]">
-                      {source.full}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Use Cases */}
-          <section className="bg-[var(--bg-secondary)] border-y border-[var(--border)] py-16">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6">
-              <h3 className="text-center text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
-                Use Cases
-              </h3>
-              <p className="text-center text-2xl font-bold text-[var(--text-primary)] mb-10">
-                Who Uses EnviroHealth?
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {[
-                  {
-                    icon: "🏠",
-                    title: "House Hunting",
-                    desc: "Research the environmental health of a neighborhood before you buy or rent. Know what you're breathing, drinking, and living near.",
-                  },
-                  {
-                    icon: "🔬",
-                    title: "Health Research",
-                    desc: "Investigate environmental factors that may affect community health outcomes. Compare disease rates against environmental conditions.",
-                  },
-                  {
-                    icon: "⚖️",
-                    title: "Environmental Justice",
-                    desc: "Identify communities disproportionately affected by environmental hazards. Use data to advocate for change.",
-                  },
-                  {
-                    icon: "🏢",
-                    title: "Real Estate Agents",
-                    desc: "Provide clients with environmental health data for listings. Differentiate yourself with comprehensive location intelligence.",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.title}
-                    className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6"
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="text-2xl">{item.icon}</span>
-                      <h4 className="text-lg font-bold text-[var(--text-primary)]">
-                        {item.title}
-                      </h4>
-                    </div>
-                    <p className="text-sm text-[var(--text-secondary)]">
-                      {item.desc}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* CTA */}
-          <section className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
-            <h3 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-4">
-              Ready to Check Your Environment?
-            </h3>
-            <p className="text-[var(--text-secondary)] mb-8 max-w-md mx-auto">
-              It&apos;s free, instant, and no sign-up required. Just enter an
-              address and get your report.
+            <p className="text-center text-xs text-[var(--text-muted)] mt-3 opacity-60">
+              Free. No sign-up. Powered by federal data sources.
             </p>
-            <button
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                setTimeout(() => inputRef.current?.focus(), 500);
-              }}
-              className="px-8 py-4 bg-[var(--accent-gold)] text-[var(--bg-primary)] font-bold text-lg rounded-xl hover:opacity-90 transition shadow-lg"
-            >
-              🌿 Get Your Free Report
-            </button>
-            <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-[var(--text-muted)]">
-              <span>✓ 100% Free</span>
-              <span>✓ No Sign-up</span>
-              <span>✓ Instant Results</span>
-              <span>✓ Open Source</span>
-            </div>
           </section>
 
           {/* Footer */}
@@ -537,49 +359,33 @@ export default function Home() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🌿</span>
-                  <span className="text-sm font-bold text-[var(--accent-gold)]">
+                  <span className="text-sm font-medium text-[var(--text-secondary)]">
                     EnviroHealth
-                  </span>
-                  <span className="text-xs text-[var(--text-muted)]">
-                    — Environmental health data aggregator
                   </span>
                 </div>
                 <div className="flex items-center gap-6 text-sm text-[var(--text-muted)]">
                   <a
                     href="/privacy"
-                    className="hover:text-[var(--accent-gold)] transition"
+                    className="hover:text-[var(--text-secondary)] transition"
                   >
                     Privacy
                   </a>
                   <a
                     href="/compare"
-                    className="hover:text-[var(--accent-gold)] transition"
+                    className="hover:text-[var(--text-secondary)] transition"
                   >
                     Compare
                   </a>
                   <a
                     href="https://github.com/molt-ai/env-health"
-                    className="hover:text-[var(--accent-gold)] transition"
+                    className="hover:text-[var(--text-secondary)] transition"
                     target="_blank"
                     rel="noopener"
                   >
                     GitHub
                   </a>
-                  <a
-                    href="https://github.com/molt-ai/env-health/issues"
-                    className="hover:text-[var(--accent-gold)] transition"
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    Feedback
-                  </a>
                 </div>
               </div>
-              <p className="mt-4 text-center text-xs text-[var(--text-muted)]">
-                Data from EPA, CDC PLACES, AirNow, and FEMA National Risk
-                Index. Free and open source.
-              </p>
             </div>
           </footer>
         </>
@@ -587,23 +393,23 @@ export default function Home() {
 
       {/* Loading State */}
       {loading && (
-        <section className="max-w-3xl mx-auto px-4 sm:px-6 pt-16 text-center">
-          <div className="animate-pulse-slow mb-8">
-            <span className="text-6xl">🌿</span>
+        <section className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 text-center">
+          <div className="animate-pulse-slow mb-6">
+            <div className="w-12 h-12 rounded-full mx-auto" style={{ background: 'linear-gradient(135deg, var(--accent-dim), var(--accent-teal))' }} />
           </div>
-          <h2 className="text-2xl font-bold mb-2">
-            Analyzing Environmental Health
+          <h2 className="text-xl font-semibold mb-2 text-[var(--text-primary)]">
+            Analyzing location
           </h2>
-          <p className="text-[var(--text-secondary)] mb-8">
-            Querying EPA, CDC, AirNow, and FEMA databases...
+          <p className="text-sm text-[var(--text-secondary)] mb-2">
+            Querying EPA, CDC, AirNow, and FEMA databases
           </p>
           {selectedLocation && (
-            <p className="text-sm text-[var(--text-muted)]">
-              📍 {selectedLocation.address}
+            <p className="text-xs text-[var(--text-muted)]">
+              {selectedLocation.address}
             </p>
           )}
 
-          <div className="mt-12 space-y-4 max-w-md mx-auto">
+          <div className="mt-12 space-y-3 max-w-sm mx-auto">
             {[
               "Air Quality",
               "Water Safety",
@@ -613,11 +419,11 @@ export default function Home() {
             ].map((label, i) => (
               <div
                 key={label}
-                className="flex items-center gap-4"
-                style={{ animationDelay: `${i * 200}ms` }}
+                className="flex items-center gap-3"
+                style={{ animationDelay: `${i * 150}ms` }}
               >
-                <div className="skeleton w-8 h-8 rounded-full shrink-0" />
-                <div className="skeleton h-6 flex-1 rounded" />
+                <div className="skeleton w-6 h-6 rounded-full shrink-0" />
+                <div className="skeleton h-5 flex-1 rounded" />
               </div>
             ))}
           </div>
@@ -626,10 +432,16 @@ export default function Home() {
 
       {/* Error State */}
       {error && !loading && (
-        <section className="max-w-3xl mx-auto px-4 sm:px-6 pt-16 text-center">
-          <div className="bg-[var(--bg-card)] border border-[var(--accent-red)]40 rounded-2xl p-8 max-w-md mx-auto">
-            <span className="text-4xl block mb-4">⚠️</span>
-            <p className="text-[var(--accent-red)] font-semibold mb-2">
+        <section className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 text-center">
+          <div className="glass-card-solid p-8 max-w-md mx-auto">
+            <div className="w-10 h-10 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </div>
+            <p className="text-[var(--accent-red)] font-medium mb-2">
               Something went wrong
             </p>
             <p className="text-sm text-[var(--text-secondary)] mb-6">
@@ -638,15 +450,15 @@ export default function Home() {
             <div className="flex flex-wrap gap-3 justify-center">
               <button
                 onClick={handleRetry}
-                className="px-6 py-2.5 bg-[var(--accent-gold)] text-[var(--bg-primary)] rounded-lg font-bold hover:opacity-90 transition"
+                className="px-5 py-2.5 bg-[var(--accent)] text-[var(--bg-primary)] rounded-lg font-medium hover:opacity-90 transition min-h-[44px]"
               >
-                🔄 Try Again
+                Try Again
               </button>
               <button
                 onClick={handleReset}
-                className="px-6 py-2.5 border border-[var(--border)] text-[var(--text-secondary)] rounded-lg font-bold hover:border-[var(--text-muted)] transition"
+                className="px-5 py-2.5 border border-[var(--border)] text-[var(--text-secondary)] rounded-lg font-medium hover:border-[var(--border-light)] transition min-h-[44px]"
               >
-                ← New Search
+                New Search
               </button>
             </div>
           </div>
@@ -654,7 +466,7 @@ export default function Home() {
             Persistent issues?{" "}
             <a
               href="https://github.com/molt-ai/env-health/issues"
-              className="text-[var(--accent-gold)] hover:underline"
+              className="text-[var(--accent-dim)] hover:underline"
               target="_blank"
               rel="noopener"
             >
@@ -675,7 +487,7 @@ export default function Home() {
               EnviroHealth — Environmental health data aggregator.{" "}
               <a
                 href="https://github.com/molt-ai/env-health"
-                className="text-[var(--accent-gold-dim)] hover:text-[var(--accent-gold)]"
+                className="text-[var(--accent-dim)] hover:text-[var(--accent)]"
                 target="_blank"
                 rel="noopener"
               >
@@ -685,13 +497,13 @@ export default function Home() {
             <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
               <a
                 href="/privacy"
-                className="hover:text-[var(--accent-gold)] transition"
+                className="hover:text-[var(--text-secondary)] transition"
               >
                 Privacy
               </a>
               <a
                 href="https://github.com/molt-ai/env-health/issues"
-                className="hover:text-[var(--accent-gold)] transition"
+                className="hover:text-[var(--text-secondary)] transition"
                 target="_blank"
                 rel="noopener"
               >

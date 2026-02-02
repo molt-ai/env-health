@@ -9,18 +9,21 @@ interface Props {
 }
 
 export default function ToxicSitesSection({ data }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const [showExplainer, setShowExplainer] = useState(false);
   const [expandedFacility, setExpandedFacility] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   if (!data) {
     return (
-      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
-          ☢️ Toxic Release Sites
-        </h3>
-        <p className="text-[var(--text-muted)] text-sm">
-          Unable to fetch toxic release data.
-        </p>
+      <div className="section-card p-5">
+        <div className="flex items-center gap-3">
+          <span className="status-dot" style={{ backgroundColor: "var(--text-muted)" }} />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Toxic Release Sites</h3>
+            <p className="text-xs text-[var(--text-muted)]">No data available</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -32,6 +35,10 @@ export default function ToxicSitesSection({ data }: Props) {
     ? "var(--accent-red)"
     : "var(--accent-yellow)";
 
+  const summaryLine = isClean
+    ? "No TRI-reporting facilities found in this ZIP code."
+    : `${data.totalFacilities} TRI-reporting facilit${data.totalFacilities === 1 ? "y" : "ies"} in this area.`;
+
   // Group by industry
   const industryCounts: Record<string, number> = {};
   for (const f of data.facilities) {
@@ -39,179 +46,170 @@ export default function ToxicSitesSection({ data }: Props) {
     industryCounts[ind] = (industryCounts[ind] || 0) + 1;
   }
 
+  const visibleFacilities = showAll ? data.facilities : data.facilities.slice(0, 5);
+
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-bold text-[var(--text-primary)]">
-            ☢️ Toxic Release Sites
-          </h3>
+    <div className="section-card" style={{ borderLeftColor: statusColor, borderLeftWidth: expanded ? 2 : 1 }}>
+      {/* Header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-5 text-left min-h-[56px]"
+      >
+        <div className="flex items-center gap-3">
+          <span className="status-dot" style={{ backgroundColor: statusColor }} />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Toxic Release Sites</h3>
+            <p className="text-xs text-[var(--text-muted)]">{summaryLine}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-lg font-bold" style={{ color: statusColor }}>
+            {data.totalFacilities}
+          </span>
+          <svg
+            className={`w-4 h-4 text-[var(--text-muted)] transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Expanded */}
+      <div className={`section-content ${expanded ? "expanded" : "collapsed"}`}>
+        <div className="px-5 pb-5 space-y-4">
           <p className="text-xs text-[var(--text-muted)]">
             EPA Toxics Release Inventory (TRI)
           </p>
-        </div>
-        <div
-          className="px-4 py-2 rounded-xl text-center"
-          style={{
-            backgroundColor: `${statusColor}15`,
-            border: `1px solid ${statusColor}33`,
-          }}
-        >
-          <span
-            className="text-2xl font-bold block"
-            style={{ color: statusColor }}
-          >
-            {data.totalFacilities}
-          </span>
-          <span className="text-[10px] text-[var(--text-muted)]">
-            facilit{data.totalFacilities === 1 ? "y" : "ies"}
-          </span>
-        </div>
-      </div>
 
-      <p className="text-sm text-[var(--text-secondary)] mb-4">
-        {data.summary}
-      </p>
+          {isClean ? (
+            <div className="flex items-center gap-3 rounded-lg px-4 py-3" style={{ backgroundColor: "rgba(62, 207, 142, 0.06)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <div>
+                <p className="text-xs text-[var(--accent-green)] font-medium">
+                  No TRI-reporting facilities found in this ZIP code.
+                </p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                  No facilities report toxic chemical releases above EPA thresholds.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Context */}
+              <p className="text-xs text-[var(--text-muted)] bg-[var(--bg-secondary)] rounded-lg px-3 py-2 leading-relaxed">
+                These facilities are required by law to report toxic chemical releases. Being on this list doesn&apos;t necessarily mean they&apos;re hazardous — it depends on what they release and how close you are.
+              </p>
 
-      {/* Context about what TRI means */}
-      {data.totalFacilities > 0 && (
-        <div className="mb-6 bg-[var(--bg-secondary)] rounded-xl p-4">
-          <p className="text-xs text-[var(--text-muted)]">
-            <strong className="text-[var(--text-secondary)]">What this means:</strong> These facilities are <em>required</em> by law to report their toxic chemical releases. Being on this list doesn&apos;t mean they&apos;re necessarily hazardous to nearby residents — it depends on what they release, in what quantities, and how close you are. Many facilities operate safely within permitted limits.
-          </p>
-        </div>
-      )}
+              {/* Industry breakdown — compact */}
+              {Object.keys(industryCounts).length > 1 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(industryCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([industry, count]) => (
+                      <span
+                        key={industry}
+                        className="text-[10px] px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: "rgba(167, 139, 250, 0.06)", color: "var(--accent-purple)" }}
+                      >
+                        {industry}: {count}
+                      </span>
+                    ))}
+                </div>
+              )}
 
-      {/* Industry breakdown */}
-      {Object.keys(industryCounts).length > 1 && (
-        <div className="mb-6">
-          <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">
-            Industry Breakdown
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(industryCounts)
-              .sort((a, b) => b[1] - a[1])
-              .map(([industry, count]) => (
-                <span
-                  key={industry}
-                  className="text-xs px-3 py-1.5 rounded-full bg-[var(--accent-purple)]10 text-[var(--accent-purple)] border border-[var(--accent-purple)]25"
-                >
-                  {industry}: {count}
-                </span>
-              ))}
-          </div>
-        </div>
-      )}
+              {/* Facilities list */}
+              <div className="space-y-1.5">
+                {visibleFacilities.map((f, i) => {
+                  const isExp = expandedFacility === i;
+                  const chemInfo = INDUSTRY_CHEMICAL_INFO[f.industry] || null;
 
-      {data.facilities.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">
-            TRI Facilities in This ZIP Code
-          </h4>
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {data.facilities.slice(0, 15).map((f, i) => {
-              const isExpanded = expandedFacility === i;
-              const chemInfo = INDUSTRY_CHEMICAL_INFO[f.industry] || null;
-
-              return (
-                <div key={i}>
-                  <button
-                    onClick={() => setExpandedFacility(isExpanded ? null : i)}
-                    className="w-full bg-[var(--bg-secondary)] rounded-lg px-4 py-3 text-sm text-left hover:bg-[var(--bg-card-hover)] transition"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <span className="font-medium text-[var(--text-primary)]">
-                          {f.facilityName}
-                        </span>
-                        <p className="text-xs text-[var(--text-muted)] mt-1">
-                          {f.streetAddress}
-                          {f.city ? `, ${f.city}` : ""}
-                          {f.state ? `, ${f.state}` : ""}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {f.industry && f.industry !== "Unknown" && (
-                          <span className="text-xs px-2 py-1 rounded bg-[var(--accent-purple)]15 text-[var(--accent-purple)] border border-[var(--accent-purple)]33">
-                            {f.industry}
-                          </span>
-                        )}
-                        <span className="text-[var(--text-muted)] text-xs">
-                          {isExpanded ? "▲" : "▼"}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                  {isExpanded && (
-                    <div className="mt-1 bg-[var(--bg-secondary)] rounded-lg px-4 py-3 border-l-2 border-[var(--accent-gold-dim)] text-sm space-y-2">
-                      {chemInfo && (
-                        <div>
-                          <p className="text-xs font-medium text-[var(--accent-gold)]">Typical chemicals for {f.industry}:</p>
-                          <p className="text-xs text-[var(--text-muted)] mt-1">{chemInfo}</p>
+                  return (
+                    <div key={i}>
+                      <button
+                        onClick={() => setExpandedFacility(isExp ? null : i)}
+                        className="w-full rounded-lg px-3 py-2.5 text-left hover:bg-[var(--bg-card-hover)] transition min-h-[44px]"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <span className="text-xs font-medium text-[var(--text-primary)]">
+                              {f.facilityName}
+                            </span>
+                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                              {f.streetAddress}{f.city ? `, ${f.city}` : ""}
+                            </p>
+                          </div>
+                          {f.industry && f.industry !== "Unknown" && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "rgba(167,139,250,0.06)", color: "var(--accent-purple)" }}>
+                              {f.industry}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                      {isExp && (
+                        <div className="ml-3 pl-3 border-l border-[var(--border)] mb-2 space-y-1.5">
+                          {chemInfo && (
+                            <p className="text-[10px] text-[var(--text-muted)]">
+                              <span className="text-[var(--text-secondary)]">Typical chemicals:</span> {chemInfo}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-[var(--text-muted)]">
+                            {f.streetAddress}{f.city ? `, ${f.city}` : ""}{f.state ? `, ${f.state}` : ""} {f.zip}
+                          </p>
+                          {f.latitude && f.longitude && (
+                            <p className="text-[10px] text-[var(--text-muted)]">
+                              {f.latitude.toFixed(4)}, {f.longitude.toFixed(4)}
+                            </p>
+                          )}
                         </div>
                       )}
-                      <p className="text-xs text-[var(--text-muted)]">
-                        📍 Located at {f.streetAddress}{f.city ? `, ${f.city}` : ""}{f.state ? `, ${f.state}` : ""} {f.zip}
-                      </p>
-                      {f.latitude && f.longitude && (
-                        <p className="text-xs text-[var(--text-muted)]">
-                          📐 Coordinates: {f.latitude.toFixed(4)}, {f.longitude.toFixed(4)}
-                        </p>
-                      )}
-                      <p className="text-xs text-[var(--accent-blue)]">
-                        🔗 Search EPA TRI Explorer for detailed release data on this facility
-                      </p>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {data.facilities.length > 15 && (
-            <p className="text-xs text-[var(--text-muted)] mt-3 text-center">
-              Showing 15 of {data.totalFacilities} facilities
-            </p>
+                  );
+                })}
+                {data.facilities.length > 5 && !showAll && (
+                  <button
+                    onClick={() => setShowAll(true)}
+                    className="text-xs text-[var(--accent-dim)] hover:text-[var(--accent)] transition pl-3 min-h-[44px] flex items-center"
+                  >
+                    Show {data.facilities.length - 5} more facilities
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Explainer */}
+          <button
+            onClick={() => setShowExplainer(!showExplainer)}
+            className="text-xs text-[var(--accent-dim)] hover:text-[var(--accent)] transition flex items-center gap-1.5 min-h-[44px]"
+          >
+            <svg className={`w-3 h-3 transition-transform ${showExplainer ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+            Understanding toxic release sites
+          </button>
+          {showExplainer && (
+            <div className="bg-[var(--bg-secondary)] rounded-lg p-4 text-xs text-[var(--text-secondary)] space-y-2 leading-relaxed">
+              <p dangerouslySetInnerHTML={{ __html: TRI_EXPLAINER.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--text-primary)]">$1</strong>') }} />
+              <div className="mt-3 space-y-1.5">
+                <p className="text-[var(--text-primary)] font-medium">Proximity & Risk:</p>
+                {TRI_PROXIMITY_INFO.map((info, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="text-[10px] font-mono text-[var(--accent-dim)] shrink-0 w-16">{info.distance}</span>
+                    <p className="text-[10px] text-[var(--text-muted)]">{info.risk}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
-      )}
-
-      {isClean && (
-        <div className="flex items-center gap-3 bg-[var(--accent-green)]10 rounded-lg px-4 py-3">
-          <span className="text-2xl">✅</span>
-          <div>
-            <p className="text-sm text-[var(--accent-green)] font-medium">
-              No TRI-reporting facilities found in this ZIP code.
-            </p>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              This means there are no facilities in this ZIP code that report toxic chemical releases above EPA thresholds.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Proximity guide */}
-      <button
-        onClick={() => setShowExplainer(!showExplainer)}
-        className="mt-6 text-xs text-[var(--accent-gold-dim)] hover:text-[var(--accent-gold)] transition flex items-center gap-1"
-      >
-        {showExplainer ? "▼ Hide" : "▶ Understanding toxic release sites & proximity risk"}
-      </button>
-      {showExplainer && (
-        <div className="mt-3 bg-[var(--bg-secondary)] rounded-xl p-4 text-sm text-[var(--text-secondary)] space-y-3">
-          <p dangerouslySetInnerHTML={{ __html: TRI_EXPLAINER.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--text-primary)]">$1</strong>') }} />
-          <div className="mt-4">
-            <p className="font-medium text-[var(--text-primary)] mb-2">Proximity & Risk:</p>
-            <div className="space-y-2">
-              {TRI_PROXIMITY_INFO.map((info, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="text-xs font-mono text-[var(--accent-gold)] shrink-0 w-20">{info.distance}</span>
-                  <p className="text-xs text-[var(--text-muted)]">{info.risk}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

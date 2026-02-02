@@ -9,21 +9,33 @@ interface Props {
 }
 
 export default function HealthOutcomesSection({ data }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const [showExplainer, setShowExplainer] = useState(false);
   const [expandedMeasure, setExpandedMeasure] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   if (!data || data.measures.length === 0) {
     return (
-      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
-          🏥 Health Outcomes
-        </h3>
-        <p className="text-[var(--text-muted)] text-sm">
-          No CDC PLACES data available for this ZIP code.
-        </p>
+      <div className="section-card p-5">
+        <div className="flex items-center gap-3">
+          <span className="status-dot" style={{ backgroundColor: "var(--text-muted)" }} />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Health Outcomes</h3>
+            <p className="text-xs text-[var(--text-muted)]">No CDC PLACES data available</p>
+          </div>
+        </div>
       </div>
     );
   }
+
+  const aboveCount = data.measures.filter((m) => m.comparison === "above").length;
+  const belowCount = data.measures.filter((m) => m.comparison === "below").length;
+
+  const statusColor = aboveCount === 0 ? "var(--accent-green)" : aboveCount <= 3 ? "var(--accent-yellow)" : "var(--accent-red)";
+
+  const summaryLine = aboveCount === 0
+    ? "All indicators at or below national averages."
+    : `${aboveCount} condition${aboveCount !== 1 ? "s" : ""} above national average.`;
 
   // Group by category
   const categories: Record<string, typeof data.measures> = {};
@@ -32,152 +44,128 @@ export default function HealthOutcomesSection({ data }: Props) {
     categories[m.category].push(m);
   }
 
-  const aboveCount = data.measures.filter((m) => m.comparison === "above").length;
-  const belowCount = data.measures.filter((m) => m.comparison === "below").length;
-  const totalCompared = data.measures.filter(m => m.comparison !== "unknown").length;
+  // For collapsed view, show most concerning first
+  const sortedAbove = data.measures
+    .filter(m => m.comparison === "above" && m.nationalAvg !== null)
+    .sort((a, b) => (b.dataValue - (b.nationalAvg || 0)) - (a.dataValue - (a.nationalAvg || 0)));
 
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-bold text-[var(--text-primary)]">
-            🏥 Health Outcomes
-          </h3>
+    <div className="section-card" style={{ borderLeftColor: statusColor, borderLeftWidth: expanded ? 2 : 1 }}>
+      {/* Header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-5 text-left min-h-[56px]"
+      >
+        <div className="flex items-center gap-3">
+          <span className="status-dot" style={{ backgroundColor: statusColor }} />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Health Outcomes</h3>
+            <p className="text-xs text-[var(--text-muted)]">{summaryLine}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex gap-1.5">
+            {aboveCount > 0 && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(239, 68, 68, 0.08)", color: "var(--accent-red)" }}>
+                {aboveCount} above
+              </span>
+            )}
+            {belowCount > 0 && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(62, 207, 142, 0.08)", color: "var(--accent-green)" }}>
+                {belowCount} below
+              </span>
+            )}
+          </div>
+          <svg
+            className={`w-4 h-4 text-[var(--text-muted)] transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Expanded */}
+      <div className={`section-content ${expanded ? "expanded" : "collapsed"}`}>
+        <div className="px-5 pb-5 space-y-4">
           <p className="text-xs text-[var(--text-muted)]">
             CDC PLACES — {data.source} ({data.dataYear})
           </p>
-        </div>
-        <div className="flex gap-3 text-xs">
-          {aboveCount > 0 && (
-            <span className="px-2 py-1 rounded-full bg-[var(--accent-red)]15 text-[var(--accent-red)] border border-[var(--accent-red)]33">
-              {aboveCount} above avg
-            </span>
-          )}
-          {belowCount > 0 && (
-            <span className="px-2 py-1 rounded-full bg-[var(--accent-green)]15 text-[var(--accent-green)] border border-[var(--accent-green)]33">
-              {belowCount} below avg
-            </span>
-          )}
-        </div>
-      </div>
 
-      {/* Summary context */}
-      <div className="mb-6 bg-[var(--bg-secondary)] rounded-xl p-4">
-        <p className="text-xs text-[var(--text-muted)]">
-          <strong className="text-[var(--text-secondary)]">What this means:</strong>{" "}
-          {aboveCount === 0 ? (
-            "All measured health indicators are at or below national averages. This suggests the community is generally healthier than typical on these measures."
-          ) : aboveCount <= 3 ? (
-            `${aboveCount} of ${totalCompared} measured conditions are above the national average. This is common and may reflect local demographics, economic factors, or environmental conditions.`
-          ) : aboveCount <= 7 ? (
-            `${aboveCount} of ${totalCompared} conditions are above national averages. This suggests elevated health burdens in this community. Proactive screening and preventive care are recommended.`
-          ) : (
-            `${aboveCount} of ${totalCompared} conditions exceed national averages — a significant number. This community faces notable health challenges that may be influenced by environmental, economic, and access-to-care factors.`
-          )}
-        </p>
-        <p className="text-xs text-[var(--text-muted)] mt-2">
-          📅 Data year: {data.dataYear}. These are model-based estimates from CDC, not direct measurements. Individual risk may differ from community averages.
-        </p>
-      </div>
-
-      <div className="space-y-6">
-        {Object.entries(categories).map(([category, measures]) => (
-          <div key={category}>
-            <h4 className="text-sm font-semibold text-[var(--accent-gold)] mb-3">
-              {getCategoryIcon(category)} {category}
-            </h4>
-            <div className="grid gap-2">
-              {measures.map((m, i) => {
-                const isExpanded = expandedMeasure === `${category}-${i}`;
+          {/* Top concerns first */}
+          {sortedAbove.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
+                Above National Average
+              </h4>
+              {sortedAbove.slice(0, showAll ? undefined : 5).map((m, i) => {
+                const key = `above-${i}`;
+                const isExp = expandedMeasure === key;
                 const description = MEASURE_DESCRIPTIONS[m.measureName];
+                const diff = m.nationalAvg !== null ? (m.dataValue - m.nationalAvg).toFixed(1) : null;
 
                 return (
                   <div key={i}>
                     <button
-                      onClick={() => setExpandedMeasure(isExpanded ? null : `${category}-${i}`)}
-                      className="w-full bg-[var(--bg-secondary)] rounded-lg px-4 py-3 text-left hover:bg-[var(--bg-card-hover)] transition"
+                      onClick={() => setExpandedMeasure(isExp ? null : key)}
+                      className="w-full rounded-lg px-3 py-2.5 text-left hover:bg-[var(--bg-card-hover)] transition min-h-[44px]"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-[var(--text-primary)]">
+                      <div className="flex items-center justify-between gap-3 mb-1.5">
+                        <span className="text-xs text-[var(--text-primary)]">
                           {m.measureName}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-[var(--text-primary)]">
+                          <span className="text-xs font-semibold text-[var(--text-primary)]">
                             {m.dataValue}%
                           </span>
-                          {m.comparison !== "unknown" && (
-                            <span
-                              className="text-xs"
-                              style={{
-                                color:
-                                  m.comparison === "above"
-                                    ? "var(--accent-red)"
-                                    : m.comparison === "below"
-                                    ? "var(--accent-green)"
-                                    : "var(--text-muted)",
-                              }}
-                            >
-                              {m.comparison === "above"
-                                ? "▲"
-                                : m.comparison === "below"
-                                ? "▼"
-                                : "●"}{" "}
-                              {m.comparison === "average" ? "avg" : m.comparison}
+                          {diff && (
+                            <span className="text-[10px] text-[var(--accent-red)]">
+                              +{diff}
                             </span>
                           )}
-                          <span className="text-[var(--text-muted)] text-xs ml-1">
-                            {isExpanded ? "▲" : "▼"}
-                          </span>
                         </div>
                       </div>
-
-                      {/* Bar comparison */}
+                      {/* Inline comparison bar */}
                       {m.nationalAvg !== null && (
                         <div className="relative">
-                          <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
+                          <div className="h-1 bg-[rgba(255,255,255,0.04)] rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{
                                 width: `${Math.min((m.dataValue / Math.max(m.dataValue, m.nationalAvg) / 1.2) * 100, 100)}%`,
-                                backgroundColor:
-                                  m.comparison === "above"
-                                    ? "var(--accent-red)"
-                                    : m.comparison === "below"
-                                    ? "var(--accent-green)"
-                                    : "var(--accent-yellow)",
+                                backgroundColor: "var(--accent-red)",
+                                opacity: 0.6,
                               }}
                             />
                           </div>
-                          <div className="flex justify-between mt-1">
-                            <span className="text-[10px] text-[var(--text-muted)]">
+                          <div className="flex justify-between mt-0.5">
+                            <span className="text-[9px] text-[var(--text-muted)]">
                               Local: {m.dataValue}%
                             </span>
-                            <span className="text-[10px] text-[var(--text-muted)]">
-                              National avg: {m.nationalAvg}%
+                            <span className="text-[9px] text-[var(--text-muted)]">
+                              Natl: {m.nationalAvg}%
                             </span>
                           </div>
                         </div>
                       )}
                     </button>
-
-                    {isExpanded && (
-                      <div className="mt-1 bg-[var(--bg-secondary)] rounded-lg px-4 py-3 border-l-2 border-[var(--accent-gold-dim)] text-sm space-y-2">
+                    {isExp && (
+                      <div className="ml-3 pl-3 border-l border-[var(--border)] mb-2 space-y-1.5">
                         {description ? (
-                          <p className="text-xs text-[var(--text-muted)]">{description}</p>
+                          <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">{description}</p>
                         ) : (
-                          <p className="text-xs text-[var(--text-muted)]">
-                            {m.measureName}: {m.dataValue}% of adults in this area are affected, compared to {m.nationalAvg !== null ? `${m.nationalAvg}% nationally` : "unknown national average"}.
+                          <p className="text-[10px] text-[var(--text-muted)]">
+                            {m.dataValue}% of adults affected, compared to {m.nationalAvg !== null ? `${m.nationalAvg}% nationally` : "unknown national average"}.
                           </p>
                         )}
-                        {m.comparison === "above" && m.nationalAvg !== null && (
-                          <p className="text-xs text-[var(--accent-orange)]">
-                            ⚠ The local rate ({m.dataValue}%) is {(m.dataValue - m.nationalAvg).toFixed(1)} percentage points above the national average ({m.nationalAvg}%). 
-                            This means roughly {Math.round((m.dataValue - m.nationalAvg) * 10)} more people per 1,000 are affected compared to a typical U.S. community.
-                          </p>
-                        )}
-                        {m.comparison === "below" && m.nationalAvg !== null && (
-                          <p className="text-xs text-[var(--accent-green)]">
-                            ✓ The local rate ({m.dataValue}%) is {(m.nationalAvg - m.dataValue).toFixed(1)} percentage points below the national average ({m.nationalAvg}%). This is a positive indicator.
+                        {m.nationalAvg !== null && (
+                          <p className="text-[10px] text-[var(--accent-orange)]">
+                            Roughly {Math.round((m.dataValue - m.nationalAvg) * 10)} more people per 1,000 affected compared to the national average.
                           </p>
                         )}
                       </div>
@@ -185,41 +173,59 @@ export default function HealthOutcomesSection({ data }: Props) {
                   </div>
                 );
               })}
+              {sortedAbove.length > 5 && !showAll && (
+                <button
+                  onClick={() => setShowAll(true)}
+                  className="text-xs text-[var(--accent-dim)] hover:text-[var(--accent)] transition pl-3 min-h-[44px] flex items-center"
+                >
+                  Show {sortedAbove.length - 5} more conditions
+                </button>
+              )}
             </div>
-          </div>
-        ))}
-      </div>
+          )}
 
-      {/* Explainer */}
-      <button
-        onClick={() => setShowExplainer(!showExplainer)}
-        className="mt-6 text-xs text-[var(--accent-gold-dim)] hover:text-[var(--accent-gold)] transition flex items-center gap-1"
-      >
-        {showExplainer ? "▼ Hide" : "▶ About CDC PLACES data"}
-      </button>
-      {showExplainer && (
-        <div className="mt-3 bg-[var(--bg-secondary)] rounded-xl p-4 text-sm text-[var(--text-secondary)] space-y-3">
-          <p dangerouslySetInnerHTML={{ __html: HEALTH_EXPLAINER.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--text-primary)]">$1</strong>') }} />
-          <p className="text-xs text-[var(--text-muted)] mt-2">
-            <strong>Important:</strong> These are community-level estimates. Your personal health depends on individual factors like genetics, lifestyle, occupation, and healthcare access. Use this data to be more aware and proactive, not to predict your own health.
+          {/* Below average — compact list */}
+          {belowCount > 0 && (
+            <div>
+              <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-2">
+                At or Below Average
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {data.measures
+                  .filter(m => m.comparison === "below" || m.comparison === "average")
+                  .slice(0, 8)
+                  .map((m, i) => (
+                    <span key={i} className="text-[10px] px-2 py-1 rounded-full" style={{ backgroundColor: "rgba(62, 207, 142, 0.06)", color: "var(--accent-green)" }}>
+                      {m.measureName} {m.dataValue}%
+                    </span>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Note */}
+          <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+            These are model-based CDC estimates for {data.dataYear}, not direct measurements. Individual risk may differ from community averages.
           </p>
+
+          {/* Explainer */}
+          <button
+            onClick={() => setShowExplainer(!showExplainer)}
+            className="text-xs text-[var(--accent-dim)] hover:text-[var(--accent)] transition flex items-center gap-1.5 min-h-[44px]"
+          >
+            <svg className={`w-3 h-3 transition-transform ${showExplainer ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+            About CDC PLACES data
+          </button>
+          {showExplainer && (
+            <div className="bg-[var(--bg-secondary)] rounded-lg p-4 text-xs text-[var(--text-secondary)] space-y-2 leading-relaxed">
+              <p dangerouslySetInnerHTML={{ __html: HEALTH_EXPLAINER.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--text-primary)]">$1</strong>') }} />
+              <p className="text-[10px] text-[var(--text-muted)] mt-2">
+                These are community-level estimates. Your personal health depends on individual factors like genetics, lifestyle, occupation, and healthcare access.
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
-}
-
-function getCategoryIcon(category: string): string {
-  const icons: Record<string, string> = {
-    Cardiovascular: "❤️",
-    Respiratory: "🫁",
-    "Chronic Disease": "🔬",
-    "Mental Health": "🧠",
-    "Risk Behavior": "⚠️",
-    Prevention: "🛡️",
-    "Health Outcomes": "📊",
-    Disability: "♿",
-    Other: "📊",
-  };
-  return icons[category] || "📊";
 }

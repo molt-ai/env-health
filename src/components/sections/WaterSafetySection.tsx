@@ -13,26 +13,32 @@ interface Props {
 }
 
 export default function WaterSafetySection({ data }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const [showExplainer, setShowExplainer] = useState(false);
   const [expandedViolation, setExpandedViolation] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   if (!data) {
     return (
-      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
-          💧 Water Safety
-        </h3>
-        <p className="text-[var(--text-muted)] text-sm">
-          Unable to fetch water safety data.
-        </p>
+      <div className="section-card p-5">
+        <div className="flex items-center gap-3">
+          <span className="status-dot" style={{ backgroundColor: "var(--text-muted)" }} />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Water Safety</h3>
+            <p className="text-xs text-[var(--text-muted)]">No data available</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   const isClean = data.totalViolations === 0;
   const statusColor = isClean ? "var(--accent-green)" : data.totalViolations > 10 ? "var(--accent-red)" : "var(--accent-yellow)";
+  const summaryLine = isClean
+    ? "No violations on record — water meets EPA standards."
+    : `${data.totalViolations} violation${data.totalViolations !== 1 ? "s" : ""} found in drinking water records.`;
 
-  // Build timeline info
+  // Timeline info
   const violationDates = data.violations
     .map(v => v.compliancePeriod)
     .filter(d => d && d !== "N/A")
@@ -40,13 +46,10 @@ export default function WaterSafetySection({ data }: Props) {
     .filter(d => !isNaN(d.getTime()))
     .sort((a, b) => b.getTime() - a.getTime());
 
-  const newestViolation = violationDates.length > 0 ? violationDates[0] : null;
-  const oldestViolation = violationDates.length > 0 ? violationDates[violationDates.length - 1] : null;
   const now = new Date();
   const recentViolations = violationDates.filter(d => (now.getTime() - d.getTime()) < 3 * 365 * 24 * 60 * 60 * 1000).length;
-  const historicalViolations = data.totalViolations - recentViolations;
 
-  // Count by violation type for context
+  // Severity counts
   const typeCounts: Record<string, number> = {};
   for (const v of data.violations) {
     const type = v.violationType || "Unknown";
@@ -61,229 +64,195 @@ export default function WaterSafetySection({ data }: Props) {
     }
   }
 
+  const visibleViolations = showAll ? data.violations : data.violations.slice(0, 5);
+
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-bold text-[var(--text-primary)]">
-            💧 Water Safety
-          </h3>
+    <div className="section-card" style={{ borderLeftColor: statusColor, borderLeftWidth: expanded ? 2 : 1 }}>
+      {/* Header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-5 text-left min-h-[56px]"
+      >
+        <div className="flex items-center gap-3">
+          <span className="status-dot" style={{ backgroundColor: statusColor }} />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Water Safety</h3>
+            <p className="text-xs text-[var(--text-muted)]">{summaryLine}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-lg font-bold" style={{ color: statusColor }}>
+            {data.totalViolations}
+          </span>
+          <svg
+            className={`w-4 h-4 text-[var(--text-muted)] transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Expanded */}
+      <div className={`section-content ${expanded ? "expanded" : "collapsed"}`}>
+        <div className="px-5 pb-5 space-y-4">
           <p className="text-xs text-[var(--text-muted)]">
             EPA Safe Drinking Water Information System (SDWIS)
           </p>
-        </div>
-        <div
-          className="px-4 py-2 rounded-xl text-center"
-          style={{ backgroundColor: `${statusColor}15`, border: `1px solid ${statusColor}33` }}
-        >
-          <span className="text-2xl font-bold block" style={{ color: statusColor }}>
-            {data.totalViolations}
-          </span>
-          <span className="text-[10px] text-[var(--text-muted)]">violations</span>
-        </div>
-      </div>
 
-      <p className="text-sm text-[var(--text-secondary)] mb-4">
-        {data.summary}
-      </p>
-
-      {/* Timeline context */}
-      {data.totalViolations > 0 && violationDates.length > 0 && (
-        <div className="mb-6 bg-[var(--bg-secondary)] rounded-xl p-4 space-y-3">
-          <h4 className="text-sm font-semibold text-[var(--text-secondary)]">📅 Historical Context</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            <div>
-              <p className="text-lg font-bold text-[var(--text-primary)]">{recentViolations}</p>
-              <p className="text-[10px] text-[var(--text-muted)]">Last 3 years</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-[var(--text-primary)]">{historicalViolations}</p>
-              <p className="text-[10px] text-[var(--text-muted)]">Older</p>
-            </div>
-            {newestViolation && (
+          {isClean ? (
+            <div className="flex items-center gap-3 rounded-lg px-4 py-3" style={{ backgroundColor: "rgba(62, 207, 142, 0.06)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
               <div>
-                <p className="text-sm font-bold text-[var(--text-primary)]">{newestViolation.toLocaleDateString()}</p>
-                <p className="text-[10px] text-[var(--text-muted)]">Most recent</p>
+                <p className="text-xs text-[var(--accent-green)] font-medium">
+                  No drinking water violations on record for this ZIP code.
+                </p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                  Local water systems have consistently met EPA standards.
+                </p>
               </div>
-            )}
-            {oldestViolation && (
-              <div>
-                <p className="text-sm font-bold text-[var(--text-primary)]">{oldestViolation.toLocaleDateString()}</p>
-                <p className="text-[10px] text-[var(--text-muted)]">Oldest</p>
+            </div>
+          ) : (
+            <>
+              {/* Severity pills */}
+              <div className="flex flex-wrap gap-2">
+                {severityCounts.high > 0 && (
+                  <span className="text-[10px] px-2.5 py-1 rounded-full" style={{ backgroundColor: "rgba(239, 68, 68, 0.08)", color: "var(--accent-red)" }}>
+                    {severityCounts.high} health-based (MCL)
+                  </span>
+                )}
+                {severityCounts.medium > 0 && (
+                  <span className="text-[10px] px-2.5 py-1 rounded-full" style={{ backgroundColor: "rgba(234, 179, 8, 0.08)", color: "var(--accent-yellow)" }}>
+                    {severityCounts.medium} treatment technique
+                  </span>
+                )}
+                {severityCounts.low > 0 && (
+                  <span className="text-[10px] px-2.5 py-1 rounded-full" style={{ backgroundColor: "rgba(96, 165, 250, 0.08)", color: "var(--accent-blue)" }}>
+                    {severityCounts.low} monitoring/reporting
+                  </span>
+                )}
               </div>
-            )}
-          </div>
-          
-          {recentViolations === 0 && data.totalViolations > 0 && (
-            <div className="flex items-center gap-2 mt-2 text-sm">
-              <span className="text-[var(--accent-green)]">✓</span>
-              <p className="text-[var(--accent-green)] text-xs">
-                Good news: All violations are older than 3 years. The water system appears to have resolved these issues.
-              </p>
-            </div>
-          )}
-          {recentViolations > 0 && (
-            <div className="flex items-center gap-2 mt-2 text-sm">
-              <span className="text-[var(--accent-orange)]">⚠</span>
-              <p className="text-[var(--accent-orange)] text-xs">
-                {recentViolations} violation(s) occurred in the last 3 years — these may still be relevant.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Violation severity breakdown */}
-      {data.totalViolations > 0 && (severityCounts.high > 0 || severityCounts.medium > 0 || severityCounts.low > 0) && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          {severityCounts.high > 0 && (
-            <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--accent-red)]15 text-[var(--accent-red)] border border-[var(--accent-red)]33">
-              🔴 {severityCounts.high} health-based (MCL)
-            </span>
-          )}
-          {severityCounts.medium > 0 && (
-            <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--accent-yellow)]15 text-[var(--accent-yellow)] border border-[var(--accent-yellow)]33">
-              🟡 {severityCounts.medium} treatment technique
-            </span>
-          )}
-          {severityCounts.low > 0 && (
-            <span className="text-xs px-3 py-1.5 rounded-full bg-[var(--accent-blue)]15 text-[var(--accent-blue)] border border-[var(--accent-blue)]33">
-              🔵 {severityCounts.low} monitoring/reporting
-            </span>
-          )}
-        </div>
-      )}
+              {/* Timeline context */}
+              {recentViolations === 0 && data.totalViolations > 0 && (
+                <p className="text-xs text-[var(--accent-green)] bg-[var(--bg-secondary)] rounded-lg px-3 py-2">
+                  All violations are older than 3 years — the water system appears to have resolved these issues.
+                </p>
+              )}
+              {recentViolations > 0 && (
+                <p className="text-xs text-[var(--accent-orange)] bg-[var(--bg-secondary)] rounded-lg px-3 py-2">
+                  {recentViolations} violation{recentViolations !== 1 ? "s" : ""} occurred in the last 3 years.
+                </p>
+              )}
 
-      {data.violations.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">
-            Violations
-          </h4>
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {data.violations.slice(0, 10).map((v, i) => {
-              const typeInfo = VIOLATION_TYPE_INFO[v.violationType];
-              const healthInfo = CONTAMINANT_HEALTH[v.contaminantName];
-              const isExpanded = expandedViolation === i;
+              {/* Violations list */}
+              {data.violations.length > 0 && (
+                <div className="space-y-1.5">
+                  {visibleViolations.map((v, i) => {
+                    const typeInfo = VIOLATION_TYPE_INFO[v.violationType];
+                    const healthInfo = CONTAMINANT_HEALTH[v.contaminantName];
+                    const isExp = expandedViolation === i;
 
-              return (
-                <div key={i}>
-                  <button
-                    onClick={() => setExpandedViolation(isExpanded ? null : i)}
-                    className="w-full bg-[var(--bg-secondary)] rounded-lg px-4 py-3 text-sm text-left hover:bg-[var(--bg-card-hover)] transition"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <span className="font-medium text-[var(--text-primary)]">
-                          {v.contaminantName}
-                        </span>
-                        <p className="text-xs text-[var(--text-muted)] mt-1">
-                          {v.pwsName}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span
-                          className="text-xs px-2 py-1 rounded"
-                          style={{
-                            backgroundColor: typeInfo?.severity === "high" ? "var(--accent-red)15" : typeInfo?.severity === "medium" ? "var(--accent-yellow)15" : "var(--accent-blue)15",
-                            color: typeInfo?.severity === "high" ? "var(--accent-red)" : typeInfo?.severity === "medium" ? "var(--accent-yellow)" : "var(--accent-blue)",
-                          }}
+                    return (
+                      <div key={i}>
+                        <button
+                          onClick={() => setExpandedViolation(isExp ? null : i)}
+                          className="w-full rounded-lg px-3 py-2.5 text-left hover:bg-[var(--bg-card-hover)] transition min-h-[44px]"
                         >
-                          {v.violationType}
-                        </span>
-                        <span className="text-[var(--text-muted)] text-xs">
-                          {isExpanded ? "▲" : "▼"}
-                        </span>
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <span className="text-xs font-medium text-[var(--text-primary)]">
+                                {v.contaminantName}
+                              </span>
+                              {v.compliancePeriod && v.compliancePeriod !== "N/A" && (
+                                <span className="text-[10px] text-[var(--text-muted)] ml-2">
+                                  {v.compliancePeriod}
+                                </span>
+                              )}
+                            </div>
+                            <span
+                              className="text-[10px] px-2 py-0.5 rounded-full shrink-0"
+                              style={{
+                                backgroundColor: typeInfo?.severity === "high" ? "rgba(239,68,68,0.08)" : typeInfo?.severity === "medium" ? "rgba(234,179,8,0.08)" : "rgba(96,165,250,0.08)",
+                                color: typeInfo?.severity === "high" ? "var(--accent-red)" : typeInfo?.severity === "medium" ? "var(--accent-yellow)" : "var(--accent-blue)",
+                              }}
+                            >
+                              {v.violationType}
+                            </span>
+                          </div>
+                        </button>
+                        {isExp && (
+                          <div className="ml-3 pl-3 border-l border-[var(--border)] mb-2 space-y-1.5">
+                            <p className="text-[10px] text-[var(--text-muted)]">{v.pwsName}</p>
+                            {typeInfo && (
+                              <p className="text-[10px] text-[var(--text-muted)]">{typeInfo.meaning}</p>
+                            )}
+                            {healthInfo && (
+                              <p className="text-[10px] text-[var(--text-secondary)]">{healthInfo}</p>
+                            )}
+                            {v.enforcementAction && (
+                              <p className="text-[10px] text-[var(--accent-orange)]">
+                                Enforcement: {v.enforcementAction}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    {v.compliancePeriod && v.compliancePeriod !== "N/A" && (
-                      <p className="text-xs text-[var(--text-muted)] mt-1">
-                        📅 {v.compliancePeriod}
-                      </p>
-                    )}
-                    {v.enforcementAction && (
-                      <p className="text-xs text-[var(--accent-orange)] mt-1">
-                        ⚠️ {v.enforcementAction}
-                      </p>
-                    )}
-                  </button>
-                  {isExpanded && (
-                    <div className="mt-1 bg-[var(--bg-secondary)] rounded-lg px-4 py-3 border-l-2 border-[var(--accent-gold-dim)] text-sm space-y-2">
-                      {typeInfo && (
-                        <div>
-                          <p className="text-xs font-medium text-[var(--accent-gold)]">Violation Type: {typeInfo.name}</p>
-                          <p className="text-xs text-[var(--text-muted)] mt-1">{typeInfo.meaning}</p>
-                        </div>
-                      )}
-                      {healthInfo && (
-                        <div>
-                          <p className="text-xs font-medium text-[var(--accent-gold)]">Health Impact of {v.contaminantName}</p>
-                          <p className="text-xs text-[var(--text-muted)] mt-1">{healthInfo}</p>
-                        </div>
-                      )}
-                      {!healthInfo && !v.contaminantName.includes("No contaminant") && (
-                        <p className="text-xs text-[var(--text-muted)]">
-                          Health info not available for this specific contaminant. Check EPA.gov for details.
-                        </p>
-                      )}
-                    </div>
+                    );
+                  })}
+                  {data.violations.length > 5 && !showAll && (
+                    <button
+                      onClick={() => setShowAll(true)}
+                      className="text-xs text-[var(--accent-dim)] hover:text-[var(--accent)] transition pl-3 min-h-[44px] flex items-center"
+                    >
+                      Show {data.violations.length - 5} more violations
+                    </button>
                   )}
                 </div>
-              );
-            })}
-          </div>
-          {data.violations.length > 10 && (
-            <p className="text-xs text-[var(--text-muted)] mt-3 text-center">
-              Showing 10 of {data.totalViolations} violations
-            </p>
+              )}
+            </>
+          )}
+
+          {/* Explainer */}
+          <button
+            onClick={() => setShowExplainer(!showExplainer)}
+            className="text-xs text-[var(--accent-dim)] hover:text-[var(--accent)] transition flex items-center gap-1.5 min-h-[44px]"
+          >
+            <svg className={`w-3 h-3 transition-transform ${showExplainer ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+            Understanding water violations
+          </button>
+          {showExplainer && (
+            <div className="bg-[var(--bg-secondary)] rounded-lg p-4 text-xs text-[var(--text-secondary)] space-y-2 leading-relaxed">
+              <p dangerouslySetInnerHTML={{ __html: WATER_EXPLAINER.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--text-primary)]">$1</strong>') }} />
+              <div className="mt-3 space-y-1.5">
+                {[
+                  { key: "MCL", label: "MCL", color: "var(--accent-red)" },
+                  { key: "TT", label: "Treatment Technique", color: "var(--accent-yellow)" },
+                  { key: "MR", label: "Monitoring & Reporting", color: "var(--accent-blue)" },
+                ].map(({ key, label, color }) => {
+                  const info = VIOLATION_TYPE_INFO[key];
+                  return info ? (
+                    <div key={key} className="flex items-start gap-2">
+                      <span className="status-dot mt-1" style={{ backgroundColor: color }} />
+                      <div>
+                        <span className="text-[var(--text-primary)] font-medium">{label}</span>
+                        <p className="text-[10px] text-[var(--text-muted)]">{info.meaning}</p>
+                      </div>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            </div>
           )}
         </div>
-      )}
-
-      {isClean && (
-        <div className="flex items-center gap-3 bg-[var(--accent-green)]10 rounded-lg px-4 py-3">
-          <span className="text-2xl">✅</span>
-          <div>
-            <p className="text-sm text-[var(--accent-green)] font-medium">
-              No drinking water violations on record for this ZIP code.
-            </p>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              This means the local water systems have consistently met EPA standards. Your tap water is considered safe based on available records.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Explainer */}
-      <button
-        onClick={() => setShowExplainer(!showExplainer)}
-        className="mt-6 text-xs text-[var(--accent-gold-dim)] hover:text-[var(--accent-gold)] transition flex items-center gap-1"
-      >
-        {showExplainer ? "▼ Hide" : "▶ Understanding water violations"}
-      </button>
-      {showExplainer && (
-        <div className="mt-3 bg-[var(--bg-secondary)] rounded-xl p-4 text-sm text-[var(--text-secondary)] space-y-3">
-          <p dangerouslySetInnerHTML={{ __html: WATER_EXPLAINER.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--text-primary)]">$1</strong>') }} />
-          <div className="mt-4 space-y-2">
-            <p className="font-medium text-[var(--text-primary)]">Types of violations:</p>
-            {[
-              { key: "MCL", label: "MCL", color: "var(--accent-red)" },
-              { key: "TT", label: "Treatment Technique", color: "var(--accent-yellow)" },
-              { key: "MR", label: "Monitoring & Reporting", color: "var(--accent-blue)" },
-            ].map(({ key, label, color }) => {
-              const info = VIOLATION_TYPE_INFO[key];
-              return info ? (
-                <div key={key} className="flex items-start gap-2">
-                  <span className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: color }} />
-                  <div>
-                    <span className="text-[var(--text-primary)] font-medium">{label}</span>
-                    <p className="text-xs text-[var(--text-muted)]">{info.meaning}</p>
-                  </div>
-                </div>
-              ) : null;
-            })}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
