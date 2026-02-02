@@ -15,11 +15,13 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    // Guard against double-init (React strict mode / re-renders)
+    if (!mapRef.current || initRef.current) return;
+    initRef.current = true;
 
-    // Dynamically import Leaflet to avoid SSR issues
     const loadMap = async () => {
       try {
         const L = await import("leaflet");
@@ -32,42 +34,43 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
           document.head.appendChild(link);
         }
 
-        // Wait for CSS to load
         await new Promise(resolve => setTimeout(resolve, 200));
 
         if (!mapRef.current) return;
 
+        // If there's already a map on this container, remove it first
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
+        }
+
         const map = L.map(mapRef.current).setView([lat, lng], 12);
         mapInstanceRef.current = map;
 
-        // Dark tile layer
         L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
           attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
           maxZoom: 19,
         }).addTo(map);
 
-        // Custom marker icons
         const homeIcon = L.divIcon({
           className: "custom-marker",
-          html: `<div style="background: var(--accent-gold); width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 12px;">📍</div>`,
+          html: `<div style="background: #c4a35a; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 12px;">📍</div>`,
           iconSize: [24, 24],
           iconAnchor: [12, 12],
         });
 
         const toxicIcon = L.divIcon({
           className: "custom-marker",
-          html: `<div style="background: var(--accent-red); width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 10px;">☢️</div>`,
+          html: `<div style="background: #c45a5a; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 10px;">☢️</div>`,
           iconSize: [20, 20],
           iconAnchor: [10, 10],
         });
 
-        // Add location marker
         L.marker([lat, lng], { icon: homeIcon })
           .addTo(map)
           .bindPopup(`<strong>${locationName}</strong><br>Searched location`)
           .openPopup();
 
-        // Add TRI facility markers
         const facilitiesWithCoords = facilities.filter(
           f => f.latitude && f.longitude && f.latitude !== 0 && f.longitude !== 0
         );
@@ -82,7 +85,6 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
           }
         }
 
-        // Fit bounds if we have facility markers
         if (facilitiesWithCoords.length > 0) {
           const allPoints: [number, number][] = [[lat, lng]];
           for (const f of facilitiesWithCoords) {
@@ -92,6 +94,9 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
           }
           map.fitBounds(L.latLngBounds(allPoints), { padding: [30, 30], maxZoom: 14 });
         }
+
+        // Force Leaflet to recalculate size after render
+        setTimeout(() => map.invalidateSize(), 300);
 
         setIsLoaded(true);
       } catch (err) {
@@ -107,6 +112,7 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
+      initRef.current = false;
     };
   }, [lat, lng, facilities, locationName]);
 
@@ -137,12 +143,12 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
           )}
           <div className="px-6 py-3 flex flex-wrap gap-4 text-xs text-[var(--text-muted)]">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "var(--accent-gold)" }} />
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#c4a35a" }} />
               Searched location
             </div>
             {facilities.some(f => f.latitude && f.longitude) && (
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "var(--accent-red)" }} />
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#c45a5a" }} />
                 TRI facility
               </div>
             )}

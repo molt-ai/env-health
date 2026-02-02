@@ -241,6 +241,13 @@ export default function ReportView({ report, onReset }: Props) {
         />
       </div>
 
+      {/* Recommendations - right after score so people see them */}
+      {recommendations.length > 0 && (
+        <div className="mb-10 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+          <RecommendationsSection recommendations={recommendations} />
+        </div>
+      )}
+
       {/* Report Sections */}
       <div className="space-y-8">
         <div className="animate-fade-in-up" style={{ animationDelay: "200ms" }}>
@@ -273,11 +280,6 @@ export default function ReportView({ report, onReset }: Props) {
 
         <div className="animate-fade-in-up" style={{ animationDelay: "600ms" }}>
           <NaturalHazardsSection data={report.naturalHazards} />
-        </div>
-
-        {/* Recommendations */}
-        <div className="animate-fade-in-up" style={{ animationDelay: "700ms" }}>
-          <RecommendationsSection recommendations={recommendations} />
         </div>
       </div>
 
