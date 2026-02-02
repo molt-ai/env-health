@@ -24,7 +24,7 @@ const TOP_ZIP_CODES = [
   "20001", "20002", "20003", "20004", "20005", // DC
 ];
 
-const BASE_URL = "https://envirohealth.app";
+const BASE_URL = "https://envirohealth.us";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages: MetadataRoute.Sitemap = [

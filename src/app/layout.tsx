@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "EnviroHealth — Free Environmental Health Reports by Address",
   description:
     "Get a free environmental health report for any US address. Air quality, water safety, toxic sites, health outcomes, and natural hazards — powered by EPA, CDC, AirNow, and FEMA data.",
-  metadataBase: new URL("https://envirohealth.app"),
+  metadataBase: new URL("https://envirohealth.us"),
   keywords: [
     "environmental health",
     "air quality",

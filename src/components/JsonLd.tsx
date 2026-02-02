@@ -18,7 +18,7 @@ export function WebApplicationJsonLd() {
         "@context": "https://schema.org",
         "@type": "WebApplication",
         name: "EnviroHealth",
-        url: "https://envirohealth.app",
+        url: "https://envirohealth.us",
         description:
           "Free environmental health reports for any US address. Includes air quality, water safety, toxic sites, health outcomes, and natural hazards.",
         applicationCategory: "HealthApplication",
@@ -67,12 +67,12 @@ export function ReportJsonLd({
         "@type": "Report",
         name: `Environmental Health Report for ${city ? `${city}, ${state}` : ""} ${zip}`,
         description: `Environmental health analysis for ZIP code ${zip}. Overall grade: ${grade} (${score}/100). Includes air quality, water safety, toxic sites, health outcomes, and natural hazard data.`,
-        url: `https://envirohealth.app/report/${zip}`,
+        url: `https://envirohealth.us/report/${zip}`,
         datePublished: new Date().toISOString(),
         publisher: {
           "@type": "Organization",
           name: "EnviroHealth",
-          url: "https://envirohealth.app",
+          url: "https://envirohealth.us",
         },
         about: {
           "@type": "Place",
