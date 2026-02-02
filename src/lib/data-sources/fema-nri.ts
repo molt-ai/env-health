@@ -33,7 +33,8 @@ async function queryFema(params: Record<string, string>): Promise<Record<string,
     f: "json",
   });
 
-  const url = `${FEMA_NRI_BASE}?${searchParams.toString()}`;
+  // URLSearchParams encodes commas as %2C — ArcGIS requires raw commas in outFields
+  const url = `${FEMA_NRI_BASE}?${searchParams.toString().replace(/%2C/gi, ",")}`;
 
   try {
     const response = await fetch(url, FETCH_OPTIONS);
