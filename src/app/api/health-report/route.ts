@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       fetchWaterViolations(location.zip),
       fetchToxicReleases(location.zip),
       fetchCDCPlaces(location.zip),
-      fetchNaturalHazards(location.county || "", location.stateCode || ""),
+      fetchNaturalHazards(location.county || "", location.stateCode || "", location.lat, location.lng),
     ]);
 
     const airQuality = results[0].status === "fulfilled" ? results[0].value : {

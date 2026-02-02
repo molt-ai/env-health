@@ -17,7 +17,7 @@ export async function fetchAirQuality(zip: string): Promise<AirQualityData | nul
   }
 
   try {
-    const url = `https://www.airnowapi.org/aq/observation/zipCode/current/?format=application/json&zipCode=${zip}&distance=50&API_KEY=${apiKey}`;
+    const url = `https://www.airnowapi.org/aq/observation/zipCode/current/?format=application/json&zipCode=${zip}&distance=100&API_KEY=${apiKey}`;
 
     const response = await fetch(url);
 

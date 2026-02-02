@@ -4,15 +4,26 @@ import { NaturalHazardsData, HazardRisk } from "../types";
 // Using the FEMA NRI API: https://hazards.fema.gov/nri/
 export async function fetchNaturalHazards(
   county: string,
-  stateCode: string
+  stateCode: string,
+  lat?: number,
+  lng?: number
 ): Promise<NaturalHazardsData | null> {
   try {
     // Try the FEMA NRI API (county-level) via ArcGIS Online
     // Format county for query: "Richmond City" or "Henrico"
     const cleanCounty = county.replace(/ County$/i, "").trim();
 
-    // The NRI data is available via ArcGIS Online feature service
-    const url = `https://services.arcgis.com/XG15cJAlne2vxtgt/arcgis/rest/services/National_Risk_Index_Counties/FeatureServer/0/query?where=STATEABBRV%3D%27${stateCode}%27+AND+COUNTY+LIKE+%27%25${encodeURIComponent(cleanCounty)}%25%27&outFields=COUNTY,STATEABBRV,RISK_SCORE,RISK_RATNG,ERQK_RISKS,ERQK_RISKR,RFLD_RISKS,RFLD_RISKR,HRCN_RISKS,HRCN_RISKR,TRND_RISKS,TRND_RISKR,WFIR_RISKS,WFIR_RISKR,WNTW_RISKS,WNTW_RISKR,HAIL_RISKS,HAIL_RISKR,HWAV_RISKS,HWAV_RISKR,SWND_RISKS,SWND_RISKR,LTNG_RISKS,LTNG_RISKR,DRGT_RISKS,DRGT_RISKR,CFLD_RISKS,CFLD_RISKR,IFLD_RISKS,IFLD_RISKR&returnGeometry=false&f=json`;
+    let url: string;
+
+    if (cleanCounty && stateCode) {
+      // Query by county name + state
+      url = `https://services.arcgis.com/XG15cJAlne2vxtgt/arcgis/rest/services/National_Risk_Index_Counties/FeatureServer/0/query?where=STATEABBRV%3D%27${stateCode}%27+AND+COUNTY+LIKE+%27%25${encodeURIComponent(cleanCounty)}%25%27&outFields=COUNTY,STATEABBRV,RISK_SCORE,RISK_RATNG,ERQK_RISKS,ERQK_RISKR,RFLD_RISKS,RFLD_RISKR,HRCN_RISKS,HRCN_RISKR,TRND_RISKS,TRND_RISKR,WFIR_RISKS,WFIR_RISKR,WNTW_RISKS,WNTW_RISKR,HAIL_RISKS,HAIL_RISKR,HWAV_RISKS,HWAV_RISKR,SWND_RISKS,SWND_RISKR,LTNG_RISKS,LTNG_RISKR,DRGT_RISKS,DRGT_RISKR,CFLD_RISKS,CFLD_RISKR,IFLD_RISKS,IFLD_RISKR&returnGeometry=false&f=json`;
+    } else if (lat && lng) {
+      // Spatial query fallback — find county by lat/lng point
+      url = `https://services.arcgis.com/XG15cJAlne2vxtgt/arcgis/rest/services/National_Risk_Index_Counties/FeatureServer/0/query?geometry=${lng},${lat}&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&outFields=COUNTY,STATEABBRV,RISK_SCORE,RISK_RATNG,ERQK_RISKS,ERQK_RISKR,RFLD_RISKS,RFLD_RISKR,HRCN_RISKS,HRCN_RISKR,TRND_RISKS,TRND_RISKR,WFIR_RISKS,WFIR_RISKR,WNTW_RISKS,WNTW_RISKR,HAIL_RISKS,HAIL_RISKR,HWAV_RISKS,HWAV_RISKR,SWND_RISKS,SWND_RISKR,LTNG_RISKS,LTNG_RISKR,DRGT_RISKS,DRGT_RISKR,CFLD_RISKS,CFLD_RISKR,IFLD_RISKS,IFLD_RISKR&inSR=4326&returnGeometry=false&f=json`;
+    } else {
+      return getFallbackHazardData(county, stateCode);
+    }
 
     const response = await fetch(url, {
       signal: AbortSignal.timeout(15000),
@@ -26,11 +37,34 @@ export async function fetchNaturalHazards(
     const json = await response.json();
 
     if (!json.features || json.features.length === 0) {
-      // Try broader search
+      // Try spatial query fallback if we have coordinates
+      if (lat && lng && cleanCounty) {
+        console.log(`FEMA NRI: county name query returned no results for "${cleanCounty}, ${stateCode}", trying spatial query...`);
+        const spatialUrl = `https://services.arcgis.com/XG15cJAlne2vxtgt/arcgis/rest/services/National_Risk_Index_Counties/FeatureServer/0/query?geometry=${lng},${lat}&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&outFields=COUNTY,STATEABBRV,RISK_SCORE,RISK_RATNG,ERQK_RISKS,ERQK_RISKR,RFLD_RISKS,RFLD_RISKR,HRCN_RISKS,HRCN_RISKR,TRND_RISKS,TRND_RISKR,WFIR_RISKS,WFIR_RISKR,WNTW_RISKS,WNTW_RISKR,HAIL_RISKS,HAIL_RISKR,HWAV_RISKS,HWAV_RISKR,SWND_RISKS,SWND_RISKR,LTNG_RISKS,LTNG_RISKR,DRGT_RISKS,DRGT_RISKR,CFLD_RISKS,CFLD_RISKR,IFLD_RISKS,IFLD_RISKR&inSR=4326&returnGeometry=false&f=json`;
+        const spatialResp = await fetch(spatialUrl, { signal: AbortSignal.timeout(15000) });
+        if (spatialResp.ok) {
+          const spatialJson = await spatialResp.json();
+          if (spatialJson.features && spatialJson.features.length > 0) {
+            // Use the spatial result — jump back to processing
+            const spatialAttrs = spatialJson.features[0].attributes;
+            return processNriAttributes(spatialAttrs, county, stateCode);
+          }
+        }
+      }
       return getFallbackHazardData(county, stateCode);
     }
 
     const attrs = json.features[0].attributes;
+    return processNriAttributes(attrs, county, stateCode);
+  } catch (error) {
+    console.error("FEMA NRI fetch error:", error);
+    return getFallbackHazardData(county, stateCode);
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function processNriAttributes(attrs: Record<string, any>, county: string, stateCode: string): NaturalHazardsData {
+    const cleanCounty = county.replace(/ County$/i, "").trim();
 
     const hazards: HazardRisk[] = [
       {
@@ -119,16 +153,12 @@ export async function fetchNaturalHazards(
       .sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0));
 
     return {
-      overallRiskScore: attrs.RISK_SCORE || null,
-      overallRiskRating: ratingFromScore(attrs.RISK_RATNG) || "Not Rated",
+      overallRiskScore: (attrs.RISK_SCORE as number) || null,
+      overallRiskRating: ratingFromScore(attrs.RISK_RATNG as string) || "Not Rated",
       hazards: validHazards,
       county: cleanCounty,
       state: stateCode,
     };
-  } catch (error) {
-    console.error("FEMA NRI fetch error:", error);
-    return getFallbackHazardData(county, stateCode);
-  }
 }
 
 function ratingFromScore(rating: string | number | null | undefined): string {

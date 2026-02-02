@@ -44,7 +44,10 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
           mapInstanceRef.current = null;
         }
 
-        const map = L.map(mapRef.current).setView([lat, lng], 12);
+        const map = L.map(mapRef.current, {
+          zoomControl: true,
+          scrollWheelZoom: true,
+        }).setView([lat, lng], 13);
         mapInstanceRef.current = map;
 
         L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
@@ -52,19 +55,34 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
           maxZoom: 19,
         }).addTo(map);
 
+        // Restrict to roughly US bounds
+        map.setMaxBounds(L.latLngBounds([18, -135], [55, -60]));
+        map.setMinZoom(4);
+
         const homeIcon = L.divIcon({
           className: "custom-marker",
-          html: `<div style="background: #c4a35a; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 12px;">📍</div>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
+          html: `<div style="background: #3ecf8e; width: 28px; height: 28px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.9); box-shadow: 0 2px 12px rgba(62,207,142,0.4); position: relative;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;background:white;border-radius:50%;"></div></div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
         });
 
         const toxicIcon = L.divIcon({
           className: "custom-marker",
-          html: `<div style="background: #c45a5a; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 10px;">☢️</div>`,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10],
+          html: `<div style="background: #ef4444; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 2px 8px rgba(239,68,68,0.3); opacity: 0.85;"></div>`,
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
         });
+
+        // Draw area circle (approx ZIP code area ~3km radius)
+        L.circle([lat, lng], {
+          radius: 3000,
+          color: '#3ecf8e',
+          fillColor: '#3ecf8e',
+          fillOpacity: 0.06,
+          weight: 1.5,
+          opacity: 0.3,
+          dashArray: '6, 4',
+        }).addTo(map);
 
         L.marker([lat, lng], { icon: homeIcon })
           .addTo(map)
@@ -119,7 +137,7 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl overflow-hidden">
       <div className="px-6 pt-4 pb-2">
-        <h3 className="text-lg font-bold text-[var(--text-primary)]">🗺️ Map View</h3>
+        <h3 className="text-lg font-bold text-[var(--text-primary)]">Map View</h3>
         <p className="text-xs text-[var(--text-muted)]">
           Location and nearby TRI facilities
         </p>
@@ -143,12 +161,16 @@ export default function MapView({ lat, lng, facilities, locationName }: Props) {
           )}
           <div className="px-6 py-3 flex flex-wrap gap-4 text-xs text-[var(--text-muted)]">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#c4a35a" }} />
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#3ecf8e" }} />
               Searched location
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full border border-[rgba(62,207,142,0.3)]" style={{ backgroundColor: "transparent", borderColor: "#3ecf8e", opacity: 0.5 }} />
+              ~ZIP area
             </div>
             {facilities.some(f => f.latitude && f.longitude) && (
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#c45a5a" }} />
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#ef4444" }} />
                 TRI facility
               </div>
             )}
