@@ -2,6 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { LocationData, EnvironmentalReport, CategoryScore } from "@/lib/types";
+import {
+  trackCompareStarted,
+  trackCompareCompleted,
+  trackAddressSearched,
+} from "@/lib/analytics";
 
 interface GeoapifySuggestion {
   properties: {
@@ -35,7 +40,13 @@ export default function ComparePage() {
 
   const debounceA = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceB = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const compareTracked = useRef(false);
   const apiKey = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
+
+  // Track compare page visit
+  useEffect(() => {
+    trackCompareStarted();
+  }, []);
 
   const fetchSuggestions = useCallback(
     async (text: string, side: Side) => {
@@ -138,6 +149,14 @@ export default function ComparePage() {
   };
 
   const bothReady = reportA && reportB;
+
+  // Track when comparison is complete
+  useEffect(() => {
+    if (bothReady && !compareTracked.current) {
+      trackCompareCompleted(reportA.location.zip, reportB.location.zip);
+      compareTracked.current = true;
+    }
+  }, [bothReady, reportA, reportB]);
 
   return (
     <main className="min-h-screen">
@@ -319,8 +338,17 @@ export default function ComparePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[var(--border)] mt-16 py-6 text-center text-xs text-[var(--text-muted)]">
-        <p>EnviroHealth — Environmental health data aggregator. <a href="https://github.com/molt-ai/env-health" className="text-[var(--accent-gold-dim)] hover:text-[var(--accent-gold)]" target="_blank" rel="noopener">Open source</a></p>
+      <footer className="border-t border-[var(--border)] mt-16 py-6">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-[var(--text-muted)]">
+            EnviroHealth — Environmental health data aggregator.{" "}
+            <a href="https://github.com/molt-ai/env-health" className="text-[var(--accent-gold-dim)] hover:text-[var(--accent-gold)]" target="_blank" rel="noopener">Open source</a>
+          </p>
+          <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
+            <a href="/privacy" className="hover:text-[var(--accent-gold)] transition">Privacy</a>
+            <a href="https://github.com/molt-ai/env-health/issues" className="hover:text-[var(--accent-gold)] transition" target="_blank" rel="noopener">Feedback</a>
+          </div>
+        </div>
       </footer>
     </main>
   );

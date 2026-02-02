@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useCallback } from "react";
 import { EnvironmentalReport } from "@/lib/types";
 import { generateRecommendations } from "@/lib/explainers";
+import { ReportJsonLd } from "@/components/JsonLd";
+import Toast from "@/components/Toast";
 import ScoreCard from "./ScoreCard";
 import AirQualitySection from "./sections/AirQualitySection";
 import WaterSafetySection from "./sections/WaterSafetySection";
@@ -11,6 +13,11 @@ import HealthOutcomesSection from "./sections/HealthOutcomesSection";
 import NaturalHazardsSection from "./sections/NaturalHazardsSection";
 import RecommendationsSection from "./sections/RecommendationsSection";
 import MapView from "./MapView";
+import {
+  trackReportShared,
+  trackReportExportedPDF,
+  trackCompareFromReport,
+} from "@/lib/analytics";
 
 interface Props {
   report: EnvironmentalReport;
@@ -20,6 +27,15 @@ interface Props {
 export default function ReportView({ report, onReset }: Props) {
   const { location, overallScore } = report;
   const reportRef = useRef<HTMLDivElement>(null);
+  const [toastMsg, setToastMsg] = useState("");
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastType, setToastType] = useState<"success" | "error" | "info">("success");
+
+  const showToast = useCallback((msg: string, type: "success" | "error" | "info" = "success") => {
+    setToastMsg(msg);
+    setToastType(type);
+    setToastVisible(true);
+  }, []);
 
   const recommendations = generateRecommendations(
     report.airQuality,
@@ -30,15 +46,11 @@ export default function ReportView({ report, onReset }: Props) {
   );
 
   const handleExportPDF = async () => {
-    try {
-      // Use browser print for clean PDF
-      const printContent = reportRef.current;
-      if (!printContent) return;
+    trackReportExportedPDF(location.zip);
 
-      // Create a new window for printing
+    try {
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
-        // Fallback: just use window.print()
         window.print();
         return;
       }
@@ -100,7 +112,9 @@ export default function ReportView({ report, onReset }: Props) {
             <p>${overallScore.summary}</p>
           </div>
 
-          ${overallScore.categoryScores.map(cat => `
+          ${overallScore.categoryScores
+            .map(
+              (cat) => `
             <div class="flex" style="margin-bottom:8px;">
               <span>${cat.icon} ${cat.name}</span>
               <strong style="color:${cat.color}">${cat.score}/100</strong>
@@ -109,69 +123,119 @@ export default function ReportView({ report, onReset }: Props) {
               <div class="score-fill" style="width:${cat.score}%;background:${cat.color}"></div>
             </div>
             <p class="small">${cat.detail}</p>
-          `).join("")}
+          `
+            )
+            .join("")}
           
           <hr>
           
-          ${report.airQuality?.aqi !== null && report.airQuality?.aqi !== undefined ? `
+          ${
+            report.airQuality?.aqi !== null &&
+            report.airQuality?.aqi !== undefined
+              ? `
             <div class="card">
               <h2>💨 Air Quality</h2>
               <p><strong>AQI: ${report.airQuality.aqi}</strong> — ${report.airQuality.category}</p>
               ${report.airQuality.reportingArea ? `<p class="small">${report.airQuality.reportingArea}, ${report.airQuality.stateCode} • ${report.airQuality.dateObserved}</p>` : ""}
-              ${report.airQuality.pollutants.map(p => `<p class="small">${p.name}: AQI ${p.aqi} (${p.category})</p>`).join("")}
+              ${report.airQuality.pollutants.map((p) => `<p class="small">${p.name}: AQI ${p.aqi} (${p.category})</p>`).join("")}
             </div>
-          ` : ""}
+          `
+              : ""
+          }
           
-          ${report.waterSafety ? `
+          ${
+            report.waterSafety
+              ? `
             <div class="card">
               <h2>💧 Water Safety</h2>
               <p><strong>${report.waterSafety.totalViolations} violation(s)</strong></p>
               <p>${report.waterSafety.summary}</p>
             </div>
-          ` : ""}
+          `
+              : ""
+          }
           
-          ${report.toxicSites ? `
+          ${
+            report.toxicSites
+              ? `
             <div class="card">
               <h2>☢️ Toxic Release Sites</h2>
               <p><strong>${report.toxicSites.totalFacilities} TRI facilities</strong></p>
               <p>${report.toxicSites.summary}</p>
             </div>
-          ` : ""}
+          `
+              : ""
+          }
           
-          ${report.healthOutcomes && report.healthOutcomes.measures.length > 0 ? `
+          ${
+            report.healthOutcomes &&
+            report.healthOutcomes.measures.length > 0
+              ? `
             <div class="card">
               <h2>🏥 Health Outcomes</h2>
               <p class="small">CDC PLACES — ${report.healthOutcomes.source} (${report.healthOutcomes.dataYear})</p>
-              ${report.healthOutcomes.measures.filter(m => m.comparison === "above").slice(0, 10).map(m => `
+              ${report.healthOutcomes.measures
+                .filter((m) => m.comparison === "above")
+                .slice(0, 10)
+                .map(
+                  (m) => `
                 <p><span class="tag red">▲ above avg</span> ${m.measureName}: ${m.dataValue}% (national: ${m.nationalAvg}%)</p>
-              `).join("")}
-              ${report.healthOutcomes.measures.filter(m => m.comparison === "below").slice(0, 5).map(m => `
+              `
+                )
+                .join("")}
+              ${report.healthOutcomes.measures
+                .filter((m) => m.comparison === "below")
+                .slice(0, 5)
+                .map(
+                  (m) => `
                 <p><span class="tag green">▼ below avg</span> ${m.measureName}: ${m.dataValue}%</p>
-              `).join("")}
+              `
+                )
+                .join("")}
             </div>
-          ` : ""}
+          `
+              : ""
+          }
           
-          ${report.naturalHazards && report.naturalHazards.hazards.length > 0 ? `
+          ${
+            report.naturalHazards &&
+            report.naturalHazards.hazards.length > 0
+              ? `
             <div class="card">
               <h2>🌪️ Natural Hazards</h2>
               <p><strong>Overall Risk: ${report.naturalHazards.overallRiskRating}</strong></p>
-              ${report.naturalHazards.hazards.slice(0, 10).map(h => `
+              ${report.naturalHazards.hazards
+                .slice(0, 10)
+                .map(
+                  (h) => `
                 <p>${h.icon} ${h.name}: <span class="tag ${h.riskRating.includes("High") ? "red" : h.riskRating.includes("Moderate") ? "yellow" : "green"}">${h.riskRating}</span></p>
-              `).join("")}
+              `
+                )
+                .join("")}
             </div>
-          ` : ""}
+          `
+              : ""
+          }
           
-          ${recommendations.length > 0 ? `
+          ${
+            recommendations.length > 0
+              ? `
             <hr>
             <h2>📋 Recommendations</h2>
-            ${recommendations.map(r => `
+            ${recommendations
+              .map(
+                (r) => `
               <div class="rec">
                 <p><strong>${r.icon} ${r.title}</strong> <span class="tag ${r.priority === "high" ? "red" : r.priority === "medium" ? "yellow" : "blue"}">${r.priority}</span></p>
                 <p class="small">${r.description}</p>
-                ${r.actions.map(a => `<p class="small">→ ${a.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`).join("")}
+                ${r.actions.map((a) => `<p class="small">→ ${a.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}</p>`).join("")}
               </div>
-            `).join("")}
-          ` : ""}
+            `
+              )
+              .join("")}
+          `
+              : ""
+          }
           
           <hr>
           <p class="small" style="text-align:center;">
@@ -182,7 +246,6 @@ export default function ReportView({ report, onReset }: Props) {
       `);
 
       printWindow.document.close();
-      // Give it a moment to render
       setTimeout(() => {
         printWindow.print();
       }, 500);
@@ -193,9 +256,10 @@ export default function ReportView({ report, onReset }: Props) {
   };
 
   // Build shareable URL
-  const shareUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/report/${location.zip}?address=${encodeURIComponent(location.address)}&lat=${location.lat}&lng=${location.lng}&county=${encodeURIComponent(location.county)}&state=${encodeURIComponent(location.state)}&stateCode=${location.stateCode}&city=${encodeURIComponent(location.city)}`
-    : "";
+  const shareUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/report/${location.zip}?address=${encodeURIComponent(location.address)}&lat=${location.lat}&lng=${location.lng}&county=${encodeURIComponent(location.county)}&state=${encodeURIComponent(location.state)}&stateCode=${location.stateCode}&city=${encodeURIComponent(location.city)}`
+      : "";
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -204,23 +268,45 @@ export default function ReportView({ report, onReset }: Props) {
           title: `EnviroHealth Report - ${location.city || location.address}`,
           url: shareUrl,
         });
+        trackReportShared(location.zip, "native_share");
       } catch {
         // User cancelled
       }
     } else {
-      await navigator.clipboard.writeText(shareUrl);
-      alert("Report link copied to clipboard!");
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast("✓ Link copied to clipboard!");
+        trackReportShared(location.zip, "clipboard");
+      } catch {
+        showToast("Failed to copy link", "error");
+      }
     }
   };
 
+  const compareUrl = `/compare`;
+
   return (
-    <div ref={reportRef} className="max-w-6xl mx-auto px-6 py-8">
+    <div ref={reportRef} className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <ReportJsonLd
+        city={location.city}
+        state={location.stateCode}
+        zip={location.zip}
+        score={overallScore.score}
+        grade={overallScore.grade}
+      />
+      <Toast
+        message={toastMsg}
+        visible={toastVisible}
+        type={toastType}
+        onClose={() => setToastVisible(false)}
+      />
+
       {/* Location Header */}
       <div className="mb-8 animate-fade-in-up">
         <p className="text-sm text-[var(--text-muted)] mb-1">
           Environmental Health Report for
         </p>
-        <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
           📍 {location.city || location.address}
           {location.stateCode ? `, ${location.stateCode}` : ""}
           {location.zip ? ` ${location.zip}` : ""}
@@ -232,7 +318,10 @@ export default function ReportView({ report, onReset }: Props) {
       </div>
 
       {/* Overall Score */}
-      <div className="mb-10 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+      <div
+        className="mb-10 animate-fade-in-up"
+        style={{ animationDelay: "100ms" }}
+      >
         <ScoreCard
           grade={overallScore.grade}
           score={overallScore.score}
@@ -241,30 +330,45 @@ export default function ReportView({ report, onReset }: Props) {
         />
       </div>
 
-      {/* Recommendations - right after score so people see them */}
+      {/* Recommendations - right after score */}
       {recommendations.length > 0 && (
-        <div className="mb-10 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+        <div
+          className="mb-10 animate-fade-in-up"
+          style={{ animationDelay: "150ms" }}
+        >
           <RecommendationsSection recommendations={recommendations} />
         </div>
       )}
 
       {/* Report Sections */}
       <div className="space-y-8">
-        <div className="animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+        <div
+          className="animate-fade-in-up"
+          style={{ animationDelay: "200ms" }}
+        >
           <AirQualitySection data={report.airQuality} />
         </div>
 
-        <div className="animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+        <div
+          className="animate-fade-in-up"
+          style={{ animationDelay: "300ms" }}
+        >
           <WaterSafetySection data={report.waterSafety} />
         </div>
 
-        <div className="animate-fade-in-up" style={{ animationDelay: "400ms" }}>
+        <div
+          className="animate-fade-in-up"
+          style={{ animationDelay: "400ms" }}
+        >
           <ToxicSitesSection data={report.toxicSites} />
         </div>
 
         {/* Map */}
         {report.location.lat && report.location.lng && (
-          <div className="animate-fade-in-up" style={{ animationDelay: "450ms" }}>
+          <div
+            className="animate-fade-in-up"
+            style={{ animationDelay: "450ms" }}
+          >
             <MapView
               lat={report.location.lat}
               lng={report.location.lng}
@@ -274,41 +378,68 @@ export default function ReportView({ report, onReset }: Props) {
           </div>
         )}
 
-        <div className="animate-fade-in-up" style={{ animationDelay: "500ms" }}>
+        <div
+          className="animate-fade-in-up"
+          style={{ animationDelay: "500ms" }}
+        >
           <HealthOutcomesSection data={report.healthOutcomes} />
         </div>
 
-        <div className="animate-fade-in-up" style={{ animationDelay: "600ms" }}>
+        <div
+          className="animate-fade-in-up"
+          style={{ animationDelay: "600ms" }}
+        >
           <NaturalHazardsSection data={report.naturalHazards} />
         </div>
       </div>
 
       {/* Actions */}
-      <div className="mt-12 text-center space-y-4">
+      <div className="mt-12 text-center space-y-6">
         <div className="flex flex-wrap gap-3 justify-center">
           <button
             onClick={onReset}
-            className="px-8 py-3 bg-[var(--accent-gold)] text-[var(--bg-primary)] font-bold rounded-lg hover:opacity-90 transition"
+            className="px-6 sm:px-8 py-3 bg-[var(--accent-gold)] text-[var(--bg-primary)] font-bold rounded-lg hover:opacity-90 transition"
           >
             Search Another Location
           </button>
           <button
             onClick={handleExportPDF}
-            className="px-8 py-3 border border-[var(--accent-gold)] text-[var(--accent-gold)] font-bold rounded-lg hover:bg-[var(--accent-gold)]10 transition"
+            className="px-6 sm:px-8 py-3 border border-[var(--accent-gold)] text-[var(--accent-gold)] font-bold rounded-lg hover:bg-[var(--accent-gold)]/10 transition"
           >
             📄 Download Report
           </button>
           <button
             onClick={handleShare}
-            className="px-8 py-3 border border-[var(--border)] text-[var(--text-secondary)] font-bold rounded-lg hover:border-[var(--text-muted)] transition"
+            className="px-6 sm:px-8 py-3 border border-[var(--border)] text-[var(--text-secondary)] font-bold rounded-lg hover:border-[var(--text-muted)] transition"
           >
             🔗 Share Report
           </button>
         </div>
-        <p className="text-xs text-[var(--text-muted)]">
-          Data sources: EPA Envirofacts, CDC PLACES, AirNow API, FEMA National
-          Risk Index
-        </p>
+
+        {/* Compare CTA */}
+        <a
+          href={compareUrl}
+          onClick={() => trackCompareFromReport(location.zip)}
+          className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition"
+        >
+          ⚖️ Compare with another location
+        </a>
+
+        <div className="flex flex-wrap justify-center gap-3">
+          <p className="text-xs text-[var(--text-muted)]">
+            Data sources: EPA Envirofacts, CDC PLACES, AirNow API, FEMA
+            National Risk Index
+          </p>
+          <span className="text-xs text-[var(--text-muted)]">•</span>
+          <a
+            href="https://github.com/molt-ai/env-health/issues"
+            className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition"
+            target="_blank"
+            rel="noopener"
+          >
+            Report a problem
+          </a>
+        </div>
       </div>
     </div>
   );

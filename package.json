@@ -26,10 +26,13 @@
   },
   "homepage": "https://github.com/molt-ai/env-health#readme",
   "dependencies": {
+    "@vercel/analytics": "^1.6.1",
+    "@vercel/speed-insights": "^1.3.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.0.0",
     "leaflet": "^1.9.4",
     "next": "^16.1.6",
+    "posthog-js": "^1.336.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-leaflet": "^5.0.0"
