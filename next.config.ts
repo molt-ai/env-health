@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
 
+  // Allow dynamic params beyond the static ones
+  // (users can visit /report/ANY_ZIP, not just the pre-generated ones)
+
   // Image optimization
   images: {
     formats: ["image/avif", "image/webp"],

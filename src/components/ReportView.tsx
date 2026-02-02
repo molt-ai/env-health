@@ -319,16 +319,20 @@ export default function ReportView({ report, onReset }: Props) {
       />
 
       {/* Location Header */}
-      <div className="mb-8 animate-fade-in-up">
-        <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-2">
-          Environmental Health Report
-        </p>
-        <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] tracking-tight">
+      <div className="mb-10 animate-fade-in-up">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-px flex-1 max-w-8" style={{ background: 'linear-gradient(to right, transparent, var(--accent-dim))' }} />
+          <p className="text-[11px] text-[var(--accent-dim)] uppercase tracking-[0.15em] font-medium">
+            Environmental Health Report
+          </p>
+          <div className="h-px flex-1 max-w-8" style={{ background: 'linear-gradient(to left, transparent, var(--accent-dim))' }} />
+        </div>
+        <h2 className="text-2xl sm:text-[2rem] font-bold text-[var(--text-primary)] tracking-[-0.025em] leading-tight">
           {location.city || location.address}
           {location.stateCode ? `, ${location.stateCode}` : ""}
           {location.zip ? ` ${location.zip}` : ""}
         </h2>
-        <p className="text-xs text-[var(--text-muted)] mt-2">
+        <p className="text-xs text-[var(--text-muted)] mt-2.5">
           {location.county ? `${location.county} County · ` : ""}
           {new Date(report.generatedAt).toLocaleDateString("en-US", {
             month: "long",
@@ -423,22 +427,13 @@ export default function ReportView({ report, onReset }: Props) {
       {/* Actions */}
       <div className="mt-12 text-center space-y-5">
         <div className="flex flex-wrap gap-3 justify-center">
-          <button
-            onClick={onReset}
-            className="px-6 py-3 bg-[var(--accent)] text-[var(--bg-primary)] font-medium rounded-lg hover:opacity-90 transition min-h-[44px]"
-          >
+          <button onClick={onReset} className="btn-primary">
             Search Another Location
           </button>
-          <button
-            onClick={handleExportPDF}
-            className="px-6 py-3 border border-[var(--border)] text-[var(--text-secondary)] font-medium rounded-lg hover:border-[var(--border-light)] transition min-h-[44px]"
-          >
+          <button onClick={handleExportPDF} className="btn-secondary">
             Download Report
           </button>
-          <button
-            onClick={handleShare}
-            className="px-6 py-3 border border-[var(--border)] text-[var(--text-secondary)] font-medium rounded-lg hover:border-[var(--border-light)] transition min-h-[44px]"
-          >
+          <button onClick={handleShare} className="btn-secondary">
             Share
           </button>
         </div>

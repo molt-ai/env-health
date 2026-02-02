@@ -54,3 +54,7 @@ export function trackRecommendationViewed(count: number) {
 export function trackCompareFromReport(zip: string) {
   capture("compare_from_report", { zip });
 }
+
+export function trackCompareUsed(zipA: string, zipB: string) {
+  capture("compare_used", { zip_a: zipA, zip_b: zipB });
+}

@@ -254,16 +254,29 @@ export default function Home() {
       {/* Hero / Search / Landing */}
       {!report && !loading && !error && (
         <>
-          <section className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 sm:pt-36 pb-16 sm:pb-24 text-center">
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-5 text-[var(--text-primary)] leading-[1.1] tracking-tight">
-              Know what you&apos;re breathing.
+          <section className="hero-gradient relative max-w-2xl mx-auto px-4 sm:px-6 pt-28 sm:pt-40 pb-16 sm:pb-24 text-center">
+            {/* Decorative accent line */}
+            <div className="flex items-center justify-center gap-2 mb-6 animate-fade-in" style={{ animationDelay: '0ms' }}>
+              <div className="h-px w-8 bg-gradient-to-r from-transparent to-[var(--accent)]" style={{ opacity: 0.4 }} />
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--accent-dim)]">
+                Environmental Intelligence
+              </span>
+              <div className="h-px w-8 bg-gradient-to-l from-transparent to-[var(--accent)]" style={{ opacity: 0.4 }} />
+            </div>
+
+            <h2 className="text-[2.5rem] sm:text-[3.5rem] md:text-[4rem] font-bold mb-5 text-[var(--text-primary)] leading-[1.05] tracking-[-0.035em] animate-fade-in-up" style={{ animationDelay: '50ms' }}>
+              Know what you&apos;re
+              <br />
+              <span className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-teal)] bg-clip-text text-transparent">
+                breathing.
+              </span>
             </h2>
-            <p className="text-lg text-[var(--text-secondary)] mb-12 max-w-md mx-auto">
-              Instant environmental health reports for any US address.
+            <p className="text-lg sm:text-xl text-[var(--text-secondary)] mb-14 max-w-md mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+              Instant environmental health reports for any US address. Free forever.
             </p>
 
-            <div className="relative max-w-xl mx-auto">
-              <div className="relative">
+            <div className="relative max-w-xl mx-auto animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+              <div className="search-input-wrapper relative">
                 <input
                   ref={inputRef}
                   type="text"
@@ -275,7 +288,8 @@ export default function Home() {
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   placeholder="Enter an address, city, or ZIP code..."
-                  className="w-full px-5 sm:px-6 py-4 sm:py-5 bg-[var(--bg-card-solid)] border border-[var(--border)] rounded-2xl text-[var(--text-primary)] text-base sm:text-lg placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-dim)] transition-colors"
+                  className="w-full px-5 sm:px-6 py-4 sm:py-5 bg-[var(--bg-card-solid)] border border-[var(--border)] rounded-2xl text-[var(--text-primary)] text-base sm:text-lg placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-dim)] transition-all duration-300"
+                  style={{ boxShadow: '0 4px 24px rgba(0, 0, 0, 0.2)' }}
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                   <svg
@@ -298,13 +312,14 @@ export default function Home() {
               {showSuggestions && suggestions.length > 0 && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-card-solid)] border border-[var(--border)] rounded-xl overflow-hidden shadow-2xl z-50"
+                  className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card-solid)] border border-[var(--border)] rounded-xl overflow-hidden z-50 animate-fade-in"
+                  style={{ boxShadow: '0 16px 48px rgba(0, 0, 0, 0.4)' }}
                 >
                   {suggestions.map((s, i) => (
                     <button
                       key={i}
                       onClick={() => handleSelect(s)}
-                      className="w-full text-left px-5 py-3.5 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] border-b border-[var(--border)] last:border-b-0 transition min-h-[44px]"
+                      className="w-full text-left px-5 py-3.5 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] border-b border-[var(--border)] last:border-b-0 transition-colors duration-150 min-h-[44px]"
                     >
                       <span className="text-[var(--text-muted)] mr-2">
                         <svg className="inline w-3.5 h-3.5 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -324,33 +339,48 @@ export default function Home() {
               )}
             </div>
 
-            <p className="mt-5 text-xs text-[var(--text-muted)]">
+            <p className="mt-5 text-xs text-[var(--text-muted)] animate-fade-in" style={{ animationDelay: '250ms' }}>
               Try &quot;Richmond, VA&quot; or &quot;90210&quot; or &quot;123 Main St, Austin, TX&quot;
             </p>
           </section>
 
-          {/* Trust Signals — subtle, compact */}
-          <section className="max-w-2xl mx-auto px-4 sm:px-6 pb-24">
-            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-[var(--text-muted)]">
-              <span className="flex items-center gap-1.5">
-                <span className="status-dot" style={{ background: 'var(--accent-dim)', width: 6, height: 6 }} />
-                EPA
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="status-dot" style={{ background: 'var(--accent-dim)', width: 6, height: 6 }} />
-                CDC PLACES
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="status-dot" style={{ background: 'var(--accent-dim)', width: 6, height: 6 }} />
-                AirNow
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="status-dot" style={{ background: 'var(--accent-dim)', width: 6, height: 6 }} />
-                FEMA NRI
-              </span>
+          {/* Features */}
+          <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-20 animate-fade-in" style={{ animationDelay: '300ms' }}>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {[
+                { label: "Air Quality", icon: "🌬️", desc: "Real-time AQI" },
+                { label: "Water Safety", icon: "💧", desc: "EPA violations" },
+                { label: "Toxic Sites", icon: "☣️", desc: "TRI facilities" },
+                { label: "Health Data", icon: "🏥", desc: "CDC PLACES" },
+                { label: "Hazards", icon: "⚡", desc: "FEMA NRI" },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="flex flex-col items-center text-center p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--border-light)] transition-all duration-200"
+                >
+                  <span className="text-xl mb-2">{item.icon}</span>
+                  <span className="text-xs font-medium text-[var(--text-primary)]">{item.label}</span>
+                  <span className="text-[10px] text-[var(--text-muted)] mt-0.5">{item.desc}</span>
+                </div>
+              ))}
             </div>
-            <p className="text-center text-xs text-[var(--text-muted)] mt-3 opacity-60">
-              Free. No sign-up. Powered by federal data sources.
+          </section>
+
+          {/* Trust bar */}
+          <section className="max-w-2xl mx-auto px-4 sm:px-6 pb-24 animate-fade-in" style={{ animationDelay: '400ms' }}>
+            <div className="flex flex-wrap justify-center gap-3 mb-4">
+              {["EPA", "CDC PLACES", "AirNow", "FEMA NRI"].map((src) => (
+                <span key={src} className="data-source-tag">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: 'var(--accent-dim)' }}
+                  />
+                  {src}
+                </span>
+              ))}
+            </div>
+            <p className="text-center text-xs text-[var(--text-muted)] opacity-60">
+              Free. No sign-up required. Powered by federal data sources.
             </p>
           </section>
 
@@ -364,16 +394,10 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="flex items-center gap-6 text-sm text-[var(--text-muted)]">
-                  <a
-                    href="/privacy"
-                    className="hover:text-[var(--text-secondary)] transition"
-                  >
+                  <a href="/privacy" className="hover:text-[var(--text-secondary)] transition">
                     Privacy
                   </a>
-                  <a
-                    href="/compare"
-                    className="hover:text-[var(--text-secondary)] transition"
-                  >
+                  <a href="/compare" className="hover:text-[var(--text-secondary)] transition">
                     Compare
                   </a>
                   <a
@@ -395,7 +419,12 @@ export default function Home() {
       {loading && (
         <section className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 text-center">
           <div className="animate-pulse-slow mb-6">
-            <div className="w-12 h-12 rounded-full mx-auto" style={{ background: 'linear-gradient(135deg, var(--accent-dim), var(--accent-teal))' }} />
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--accent-dim), var(--accent-teal))' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(10,10,12,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a10 10 0 1 0 10 10" />
+                <path d="M12 2v10l6.5-3" />
+              </svg>
+            </div>
           </div>
           <h2 className="text-xl font-semibold mb-2 text-[var(--text-primary)]">
             Analyzing location
@@ -434,7 +463,7 @@ export default function Home() {
       {error && !loading && (
         <section className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 text-center">
           <div className="glass-card-solid p-8 max-w-md mx-auto">
-            <div className="w-10 h-10 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
+            <div className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(248, 113, 113, 0.1)', border: '1px solid rgba(248, 113, 113, 0.15)' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="15" y1="9" x2="9" y2="15" />
@@ -448,16 +477,10 @@ export default function Home() {
               {error}
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <button
-                onClick={handleRetry}
-                className="px-5 py-2.5 bg-[var(--accent)] text-[var(--bg-primary)] rounded-lg font-medium hover:opacity-90 transition min-h-[44px]"
-              >
+              <button onClick={handleRetry} className="btn-primary">
                 Try Again
               </button>
-              <button
-                onClick={handleReset}
-                className="px-5 py-2.5 border border-[var(--border)] text-[var(--text-secondary)] rounded-lg font-medium hover:border-[var(--border-light)] transition min-h-[44px]"
-              >
+              <button onClick={handleReset} className="btn-secondary">
                 New Search
               </button>
             </div>
@@ -495,10 +518,7 @@ export default function Home() {
               </a>
             </p>
             <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
-              <a
-                href="/privacy"
-                className="hover:text-[var(--text-secondary)] transition"
-              >
+              <a href="/privacy" className="hover:text-[var(--text-secondary)] transition">
                 Privacy
               </a>
               <a
