@@ -179,14 +179,22 @@ export default function Home() {
               EnviroHealth
             </h1>
           </button>
-          {selectedLocation && (
-            <button
-              onClick={handleReset}
-              className="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition"
+          <div className="flex items-center gap-4">
+            <a
+              href="/compare"
+              className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition"
             >
-              ← New Search
-            </button>
-          )}
+              ⚖️ Compare
+            </a>
+            {selectedLocation && (
+              <button
+                onClick={handleReset}
+                className="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition"
+              >
+                ← New Search
+              </button>
+            )}
+          </div>
         </div>
       </header>
 

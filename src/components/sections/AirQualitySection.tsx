@@ -1,6 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { AirQualityData } from "@/lib/types";
+import {
+  AQI_EXPLAINER,
+  AQI_LEVELS,
+  POLLUTANT_INFO,
+} from "@/lib/explainers";
 
 interface Props {
   data: AirQualityData | null;
@@ -16,6 +22,9 @@ const aqiColors: Record<string, string> = {
 };
 
 export default function AirQualitySection({ data }: Props) {
+  const [showExplainer, setShowExplainer] = useState(false);
+  const [expandedPollutant, setExpandedPollutant] = useState<string | null>(null);
+
   if (!data) {
     return (
       <SectionShell title="💨 Air Quality" subtitle="No data available">
@@ -27,6 +36,7 @@ export default function AirQualitySection({ data }: Props) {
   }
 
   const color = aqiColors[data.category] || "var(--text-secondary)";
+  const levelInfo = AQI_LEVELS[data.category];
 
   return (
     <SectionShell
@@ -42,7 +52,7 @@ export default function AirQualitySection({ data }: Props) {
           {/* AQI Main Display */}
           <div className="flex items-center gap-6 mb-6">
             <div
-              className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center"
+              className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center shrink-0"
               style={{ backgroundColor: `${color}22`, border: `2px solid ${color}` }}
             >
               <span className="text-2xl font-bold" style={{ color }}>
@@ -54,11 +64,25 @@ export default function AirQualitySection({ data }: Props) {
               <p className="text-lg font-semibold" style={{ color }}>
                 {data.category}
               </p>
-              <p className="text-sm text-[var(--text-muted)]">
-                {getAQIDescription(data.aqi)}
-              </p>
+              {levelInfo && (
+                <p className="text-sm text-[var(--text-secondary)] mt-1">
+                  {levelInfo.meaning}
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Advice box */}
+          {levelInfo && (
+            <div
+              className="rounded-xl px-4 py-3 mb-6"
+              style={{ backgroundColor: `${color}10`, border: `1px solid ${color}25` }}
+            >
+              <p className="text-sm font-medium" style={{ color }}>
+                💡 {levelInfo.advice}
+              </p>
+            </div>
+          )}
 
           {/* AQI Scale */}
           <div className="mb-6">
@@ -88,6 +112,13 @@ export default function AirQualitySection({ data }: Props) {
             </div>
           </div>
 
+          {/* Seasonal note */}
+          <div className="mb-6 bg-[var(--bg-secondary)] rounded-lg px-4 py-3">
+            <p className="text-xs text-[var(--text-muted)]">
+              📅 <strong className="text-[var(--text-secondary)]">Note:</strong> Air quality varies by season. Ozone tends to be worst in summer; particulate matter can spike during wildfire season and winter inversions. This reading is from {data.dateObserved} and reflects current conditions, not annual averages.
+            </p>
+          </div>
+
           {/* Pollutants */}
           {data.pollutants.length > 0 && (
             <div>
@@ -95,35 +126,83 @@ export default function AirQualitySection({ data }: Props) {
                 Pollutant Breakdown
               </h4>
               <div className="grid gap-3">
-                {data.pollutants.map((p, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between bg-[var(--bg-secondary)] rounded-lg px-4 py-3"
-                  >
-                    <div>
-                      <span className="text-sm font-medium text-[var(--text-primary)]">
-                        {p.name}
-                      </span>
-                      <span className="text-xs text-[var(--text-muted)] ml-2">
-                        {p.concentration} {p.unit}
-                      </span>
+                {data.pollutants.map((p, i) => {
+                  const pInfo = POLLUTANT_INFO[p.name] || POLLUTANT_INFO[p.name.replace(".", "")];
+                  const isExpanded = expandedPollutant === p.name;
+                  return (
+                    <div key={i}>
+                      <button
+                        onClick={() => setExpandedPollutant(isExpanded ? null : p.name)}
+                        className="w-full flex items-center justify-between bg-[var(--bg-secondary)] rounded-lg px-4 py-3 hover:bg-[var(--bg-card-hover)] transition text-left"
+                      >
+                        <div>
+                          <span className="text-sm font-medium text-[var(--text-primary)]">
+                            {pInfo ? pInfo.fullName : p.name}
+                          </span>
+                          <span className="text-xs text-[var(--text-muted)] ml-2">
+                            {p.concentration} {p.unit}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-sm font-bold"
+                            style={{ color: aqiColors[p.category] || "var(--text-secondary)" }}
+                          >
+                            {p.aqi}
+                          </span>
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: `${aqiColors[p.category] || "var(--border)"}22`,
+                              color: aqiColors[p.category] || "var(--text-muted)",
+                            }}
+                          >
+                            {p.category}
+                          </span>
+                          <span className="text-[var(--text-muted)] text-xs ml-1">
+                            {isExpanded ? "▲" : "▼"}
+                          </span>
+                        </div>
+                      </button>
+                      {isExpanded && pInfo && (
+                        <div className="mt-1 bg-[var(--bg-secondary)] rounded-lg px-4 py-3 border-l-2 border-[var(--accent-gold-dim)] text-sm space-y-2">
+                          <p className="text-[var(--text-secondary)]">{pInfo.description}</p>
+                          <p className="text-[var(--text-muted)]">
+                            <strong className="text-[var(--text-secondary)]">Sources:</strong> {pInfo.sources}
+                          </p>
+                          <p className="text-[var(--text-muted)]">
+                            <strong className="text-[var(--text-secondary)]">Health effects:</strong> {pInfo.health}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="text-sm font-bold"
-                        style={{ color: aqiColors[p.category] || "var(--text-secondary)" }}
-                      >
-                        {p.aqi}
-                      </span>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: `${aqiColors[p.category] || "var(--border)"}22`,
-                          color: aqiColors[p.category] || "var(--text-muted)",
-                        }}
-                      >
-                        {p.category}
-                      </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Explainer toggle */}
+          <button
+            onClick={() => setShowExplainer(!showExplainer)}
+            className="mt-6 text-xs text-[var(--accent-gold-dim)] hover:text-[var(--accent-gold)] transition flex items-center gap-1"
+          >
+            {showExplainer ? "▼ Hide" : "▶ What is the AQI?"} — Understanding Air Quality
+          </button>
+          {showExplainer && (
+            <div className="mt-3 bg-[var(--bg-secondary)] rounded-xl p-4 text-sm text-[var(--text-secondary)] space-y-3">
+              <p dangerouslySetInnerHTML={{ __html: AQI_EXPLAINER.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--text-primary)]">$1</strong>') }} />
+              <div className="grid gap-2 mt-4">
+                {Object.entries(AQI_LEVELS).map(([level, info]) => (
+                  <div key={level} className="flex items-start gap-3">
+                    <span
+                      className="w-3 h-3 rounded-full mt-1 shrink-0"
+                      style={{ backgroundColor: aqiColors[level] || "var(--border)" }}
+                    />
+                    <div>
+                      <span className="font-medium text-[var(--text-primary)]">{level}</span>
+                      <span className="text-[var(--text-muted)]"> ({info.range})</span>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">{info.meaning}</p>
                     </div>
                   </div>
                 ))}
@@ -162,18 +241,4 @@ function SectionShell({
       {children}
     </div>
   );
-}
-
-function getAQIDescription(aqi: number): string {
-  if (aqi <= 50)
-    return "Air quality is satisfactory, and air pollution poses little or no risk.";
-  if (aqi <= 100)
-    return "Air quality is acceptable. However, there may be a risk for some people.";
-  if (aqi <= 150)
-    return "Members of sensitive groups may experience health effects.";
-  if (aqi <= 200)
-    return "Some members of the general public may experience health effects.";
-  if (aqi <= 300)
-    return "Health alert: The risk of health effects is increased for everyone.";
-  return "Health warning of emergency conditions.";
 }

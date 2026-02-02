@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
       totalFacilities: 0, facilities: [], summary: "Toxic release data temporarily unavailable.",
     };
     const healthOutcomes = results[3].status === "fulfilled" ? results[3].value : {
-      measures: [], summary: "Health outcomes data temporarily unavailable.",
+      measures: [], dataYear: "", source: "CDC PLACES", summary: "Health outcomes data temporarily unavailable.",
     };
     const naturalHazards = results[4].status === "fulfilled" ? results[4].value : {
-      overallRisk: "Unknown", hazards: [], summary: "Natural hazard data temporarily unavailable.",
+      overallRiskScore: null, overallRiskRating: "Unknown", hazards: [], county: location.county || "", state: location.stateCode || "",
     };
 
     // Log any failures

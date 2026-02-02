@@ -26,6 +26,15 @@ export interface OverallScore {
   grade: string; // A-F
   score: number; // 0-100
   summary: string;
+  categoryScores: CategoryScore[];
+}
+
+export interface CategoryScore {
+  name: string;
+  score: number;
+  icon: string;
+  color: string;
+  detail: string;
 }
 
 // Air Quality
