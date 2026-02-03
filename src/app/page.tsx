@@ -275,7 +275,7 @@ export default function Home() {
               Instant environmental health reports for any US address. Free forever.
             </p>
 
-            <div className="relative max-w-xl mx-auto animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+            <div className="relative max-w-xl mx-auto animate-fade-in-up" style={{ animationDelay: '150ms', zIndex: 100, position: 'relative' }}>
               <div className="search-input-wrapper relative">
                 <input
                   ref={inputRef}
@@ -312,8 +312,8 @@ export default function Home() {
               {showSuggestions && suggestions.length > 0 && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50 animate-fade-in"
-                  style={{ boxShadow: '0 16px 48px rgba(0, 0, 0, 0.6)', backgroundColor: '#1a1a1f', border: '1px solid rgba(255,255,255,0.08)' }}
+                  className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden animate-fade-in"
+                  style={{ boxShadow: '0 16px 48px rgba(0, 0, 0, 0.8)', backgroundColor: '#1a1a1f', border: '1px solid rgba(255,255,255,0.08)', zIndex: 9999, position: 'relative' }}
                 >
                   {suggestions.map((s, i) => (
                     <button
