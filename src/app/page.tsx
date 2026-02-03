@@ -312,14 +312,14 @@ export default function Home() {
               {showSuggestions && suggestions.length > 0 && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card-solid)] border border-[var(--border)] rounded-xl overflow-hidden z-50 animate-fade-in"
-                  style={{ boxShadow: '0 16px 48px rgba(0, 0, 0, 0.4)' }}
+                  className="absolute top-full left-0 right-0 mt-2 rounded-xl overflow-hidden z-50 animate-fade-in"
+                  style={{ boxShadow: '0 16px 48px rgba(0, 0, 0, 0.6)', backgroundColor: '#1a1a1f', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   {suggestions.map((s, i) => (
                     <button
                       key={i}
                       onClick={() => handleSelect(s)}
-                      className="w-full text-left px-5 py-3.5 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] border-b border-[var(--border)] last:border-b-0 transition-colors duration-150 min-h-[44px]"
+                      className="w-full text-left px-5 py-3.5 text-sm text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.06)] border-b border-[rgba(255,255,255,0.06)] last:border-b-0 transition-colors duration-150 min-h-[44px]"
                     >
                       <span className="text-[var(--text-muted)] mr-2">
                         <svg className="inline w-3.5 h-3.5 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -339,9 +339,11 @@ export default function Home() {
               )}
             </div>
 
-            <p className="mt-5 text-xs text-[var(--text-muted)] animate-fade-in" style={{ animationDelay: '250ms' }}>
-              Try &quot;Richmond, VA&quot; or &quot;90210&quot; or &quot;123 Main St, Austin, TX&quot;
-            </p>
+            {!(showSuggestions && suggestions.length > 0) && (
+              <p className="mt-5 text-xs text-[var(--text-muted)] animate-fade-in" style={{ animationDelay: '250ms' }}>
+                Try &quot;Richmond, VA&quot; or &quot;90210&quot; or &quot;123 Main St, Austin, TX&quot;
+              </p>
+            )}
           </section>
 
           {/* Features */}
